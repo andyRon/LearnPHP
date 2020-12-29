@@ -2,6 +2,14 @@ https://www.yiichina.com/doc/guide/2.0
 
 # 1 入门
 
+## 安装
+
+### 1 通过 Composer 安装
+
+### 2 通过归档文件安装
+
+直接下载复制即可，注意配置`cookieValidationKey`
+
 ## 运行应用
 
 浏览器底部有调试工具
@@ -30,11 +38,23 @@ basic/             应用根目录
 
 Yii2的每一个应用都有唯一可访问的PHP入口脚本`web/index.php` 。入口脚本接受一个 Web 请求并创建**应用实例**去处理它。 应用在它的**组件**辅助下解析请求， 并分派请求至 MVC 元素。视图使用**小部件**去创建复杂和动态的用户界面。
 
-![img](evernotecid://A2503746-B0DC-4723-B533-C4F2EA8D22E3/appyinxiangcom/6720819/ENResource/p24743)
+![应用静态结构](https://www.yiichina.com/doc/guide/2.0/images/application-structure.png)
 
 ### 请求生命周期
 
-![img](evernotecid://A2503746-B0DC-4723-B533-C4F2EA8D22E3/appyinxiangcom/6720819/ENResource/p24742)
+![请求生命周期](https://www.yiichina.com/doc/guide/2.0/images/request-lifecycle.png)
+
+1. 用户向[入口脚本](https://www.yiichina.com/doc/guide/2.0/structure-entry-scripts) `web/index.php` 发起请求。
+2. 入口脚本加载应用[配置](https://www.yiichina.com/doc/guide/2.0/concept-configurations)并创建一个[应用](https://www.yiichina.com/doc/guide/2.0/structure-applications) 实例去处理请求。
+3. 应用通过[请求](https://www.yiichina.com/doc/guide/2.0/runtime-request)组件解析请求的 [路由](https://www.yiichina.com/doc/guide/2.0/runtime-routing)。
+4. 应用创建一个[控制器](https://www.yiichina.com/doc/guide/2.0/structure-controllers)实例去处理请求。
+5. 控制器创建一个[动作](https://www.yiichina.com/doc/guide/2.0/structure-controllers)实例并针对操作执行过滤器。
+6. 如果任何一个过滤器返回失败，则动作取消。
+7. 如果所有过滤器都通过，动作将被执行。
+8. 动作会加载一个数据模型，或许是来自数据库。
+9. 动作会渲染一个视图，把数据模型提供给它。
+10. 渲染结果返回给[响应](https://www.yiichina.com/doc/guide/2.0/runtime-responses)组件。
+11. 响应组件发送渲染结果给用户浏览器。
 
 ## say Hello
 
@@ -60,6 +80,10 @@ yii\base\Model 被用于普通模型类的父类并与数据表无关。yii\db\A
 
 表达式`Yii::$app`代表[应用](https://www.yiichina.com/doc/guide/2.0/structure-applications)实例，它是一个全局可访问的单例。 同时它也是一个[服务定位器](https://www.yiichina.com/doc/guide/2.0/concept-service-locator)， 能提供request，response，db等等特定功能的组件。 在上面的代码里就是使用request组件来访问应用实例收到的$_POST数据。
 
+> **注意：** 在这个简单例子里我们只是呈现了有效数据的确认页面。 实践中你应该考虑使用 [refresh()](https://www.yiichina.com/doc/api/2.0/yii-web-controller#refresh()-detail) 或 [redirect()](https://www.yiichina.com/doc/api/2.0/yii-web-controller#redirect()-detail) 去避免表单重复提交问题。
+
+> **警告：** 客户端验证是提高用户体验的手段。 无论它是否正常启用，服务端验证则都是必须的，请不要忽略它。
+
 Yii 提供了相当多类似的小部件去帮你生成复杂且动态的视图。
 
 # 2 应用结构
@@ -82,7 +106,7 @@ Yii 提供了相当多类似的小部件去帮你生成复杂且动态的视图�
 
 ## 入口脚本
 
-`web/index.php`和`yii`
+`web/index.php`和`yii`(命令运行方式：`./yii <route> [arguments] [options]`)
 
 1. 定义全局常量；
 2. 注册 [Composer 自动加载器](http://getcomposer.org/doc/01-basic-usage.md#autoloading)；
@@ -126,37 +150,140 @@ $config = require __DIR__ . '/../config/web.php';
 
 ### 应用主体属性
 
-必要和重要属性：
+#### 必要属性
 
-| 应用主体属性                                                 | 意思                                                         | 分类       | 备注                                                         |
-| ------------------------------------------------------------ | ------------------------------------------------------------ | ---------- | ------------------------------------------------------------ |
-| [id](https://www.yiichina.com/doc/api/2.0/yii-base-module#$id-detail) | 应用的唯一标识ID                                             | 必要属性   |                                                              |
-| [basePath](https://www.yiichina.com/doc/api/2.0/yii-base-module#$basePath-detail) | 应用的根目录。比如`basic/`                                   | 必要属性   |                                                              |
-| [aliases](https://www.yiichina.com/doc/api/2.0/yii-base-module#$aliases-detail) | 定义别名，可用数组定义多个别名。等价于[Yii::setAlias()](https://www.yiichina.com/doc/api/2.0/yii-baseyii#setAlias()-detail)方法。 | 重要属性   |                                                              |
-| [bootstrap](https://www.yiichina.com/doc/api/2.0/yii-base-application#bootstrap()-detail) | 用数组指定启动阶段 [bootstrapping process](https://www.yiichina.com/doc/api/2.0/yii-base-application#bootstrap()-detail) 需要运行的组件。 |            | 启动太多的组件会降低系统性能，因为每次请求都需要重新运行启动组件， 因此谨慎配置启动组件。 |
-| [catchAll](https://www.yiichina.com/doc/api/2.0/yii-web-application#$catchAll-detail) | 指定一个要处理所有用户请求的 [控制器方法](https://www.yiichina.com/doc/guide/2.0/structure-controllers)， 通常在维护模式下使用，同一个方法处理所有用户请求。 |            | 只能网页应用                                                 |
-| [components](https://www.yiichina.com/doc/api/2.0/yii-di-servicelocator#$components-detail) | 用来注册多个在其他地方使用的 [应用组件](https://www.yiichina.com/doc/guide/2.0/#structure-application-components)。 |            |                                                              |
-| [controllerMap](https://www.yiichina.com/doc/api/2.0/yii-base-module#$controllerMap-detail) | 指定一个控制器 ID 到任意控制器类                             | 最重要属性 |                                                              |
-| [controllerNamespace](https://www.yiichina.com/doc/api/2.0/yii-base-application#$controllerNamespace-detail) | 指定控制器类默认的命名空间                                   |            |                                                              |
-| [language](https://www.yiichina.com/doc/api/2.0/yii-base-application#$language-detail) | 指定应用展示给终端用户的语言                                 |            |                                                              |
-| [modules](https://www.yiichina.com/doc/api/2.0/yii-base-module#$modules-detail) | 定应用所包含的 [模块](https://www.yiichina.com/doc/guide/2.0/structure-modules)。 |            |                                                              |
-| [name](https://www.yiichina.com/doc/api/2.0/yii-base-application#$name-detail) | 指定可能想展示给终端用户的应用名称，不是唯一的。             |            |                                                              |
-| [params](https://www.yiichina.com/doc/api/2.0/yii-base-module#$params-detail) | 指定可以全局访问的参数， 代替程序中硬编码的数字和字符， 应用中的参数定义到一个单独的文件并随时可以访问是一个好习惯。 |            |                                                              |
-| [sourceLanguage](https://www.yiichina.com/doc/api/2.0/yii-base-application#$sourceLanguage-detail) | 指定应用代码的语言                                           |            |                                                              |
-| [timeZone](https://www.yiichina.com/doc/api/2.0/yii-base-application#$timeZone-detail) | 修改 PHP 运行环境中的默认时区，配置该属性本质上就是调用 PHP 函数 [date_default_timezone_set()](http://php.net/manual/en/function.date-default-timezone-set.php) |            |                                                              |
-| [version](https://www.yiichina.com/doc/api/2.0/yii-base-module#$version-detail) |                                                              |            |                                                              |
+##### [id](https://www.yiichina.com/doc/api/2.0/yii-base-module#$id-detail)
 
-实用属性：
+应用的唯一标识ID。
+
+##### [basePath](https://www.yiichina.com/doc/api/2.0/yii-base-module#$basePath-detail)
+
+应用的根目录。比如`basic/`。
+
+经常用于派生一些其他重要路径（如 runtime 路径）， 因此，系统预定义 `@app` 代表这个路径。 派生路径可以通过这个别名组成（如`@app/runtime`代表runtime的路径）。
+
+#### 重要属性
+
+##### [aliases](https://www.yiichina.com/doc/api/2.0/yii-base-module#$aliases-detail)
+
+定义别名，可用数组定义多个别名。等价于[Yii::setAlias()](https://www.yiichina.com/doc/api/2.0/yii-baseyii#setAlias()-detail)方法。
+
+```php
+[
+    'aliases' => [
+        '@name1' => 'path/to/path1',
+        '@name2' => 'path/to/path2',
+    ],
+]
+```
+
+##### [bootstrap](https://www.yiichina.com/doc/api/2.0/yii-base-application#bootstrap()-detail)
+
+用数组指定启动阶段 [bootstrapping process](https://www.yiichina.com/doc/api/2.0/yii-base-application#bootstrap()-detail) 需要运行的组件。
+
+启动太多的组件会降低系统性能，因为每次请求都需要重新运行启动组件， 因此谨慎配置启动组件。
+
+##### [catchAll](https://www.yiichina.com/doc/api/2.0/yii-web-application#$catchAll-detail)
+
+只能网页应用。
+
+指定一个要处理所有用户请求的 [控制器方法](https://www.yiichina.com/doc/guide/2.0/structure-controllers)， 通常在维护模式下使用，同一个方法处理所有用户请求。
+
+##### [components](https://www.yiichina.com/doc/api/2.0/yii-di-servicelocator#$components-detail)
+
+用来注册多个在其他地方使用的 [应用组件](https://www.yiichina.com/doc/guide/2.0/#structure-application-components)。
+
+##### [controllerMap](https://www.yiichina.com/doc/api/2.0/yii-base-module#$controllerMap-detail)
+
+指定一个控制器 ID 到任意控制器类
+最重要属性
+
+##### [controllerNamespace](https://www.yiichina.com/doc/api/2.0/yii-base-application#$controllerNamespace-detail)
+
+指定控制器类默认的命名空间
+
+##### [language](https://www.yiichina.com/doc/api/2.0/yii-base-application#$language-detail)
+
+指定应用展示给终端用户的语言
+
+##### [modules](https://www.yiichina.com/doc/api/2.0/yii-base-module#$modules-detail)
+
+定应用所包含的 [模块](https://www.yiichina.com/doc/guide/2.0/structure-modules)。
+
+##### [name](https://www.yiichina.com/doc/api/2.0/yii-base-application#$name-detail)
+
+指定可能想展示给终端用户的应用名称，不是唯一的。
+
+##### [params](https://www.yiichina.com/doc/api/2.0/yii-base-module#$params-detail)
+
+指定可以全局访问的参数， 代替程序中硬编码的数字和字符， 应用中的参数定义到一个单独的文件并随时可以访问是一个好习惯。
+
+##### [sourceLanguage](https://www.yiichina.com/doc/api/2.0/yii-base-application#$sourceLanguage-detail)
+
+指定应用代码的语言
+
+##### [timeZone](https://www.yiichina.com/doc/api/2.0/yii-base-application#$timeZone-detail)
+
+修改 PHP 运行环境中的默认时区，配置该属性本质上就是调用 PHP 函数 [date_default_timezone_set()](http://php.net/manual/en/function.date-default-timezone-set.php)
+
+##### [version](https://www.yiichina.com/doc/api/2.0/yii-base-module#$version-detail)
+
+#### 实用属性
+
+##### [charset](https://www.yiichina.com/doc/api/2.0/yii-base-application#$charset-detail)
+
+##### [defaultRoute](https://www.yiichina.com/doc/api/2.0/yii-base-module#$defaultRoute-detail)
+
+##### [extensions](https://www.yiichina.com/doc/api/2.0/yii-base-application#$extensions-detail)
+
+##### [layout](https://www.yiichina.com/doc/api/2.0/yii-base-application#$layout-detail)
+
+##### [layoutPath](https://www.yiichina.com/doc/api/2.0/yii-base-module#$layoutPath-detail)
+
+##### [runtimePath](https://www.yiichina.com/doc/api/2.0/yii-base-application#$runtimePath-detail)
+
+##### [viewPath](https://www.yiichina.com/doc/api/2.0/yii-base-module#$viewPath-detail)
+
+##### [vendorPath](https://www.yiichina.com/doc/api/2.0/yii-base-application#$vendorPath-detail)
+
+##### [enableCoreCommands](https://www.yiichina.com/doc/api/2.0/yii-console-application#$enableCoreCommands-detail)
 
 ### 应用事件
 
 应用在处理请求过程中会触发事件，可以在配置文件配置事件处理代码。
 
+```php
+[
+    'on beforeRequest' => function ($event) {
+        // ...
+    },
+]
+```
+
+EVENT_BEFORE_REQUEST
+
+EVENT_AFTER_REQUEST
+
+EVENT_BEFORE_ACTION 
+
+EVENT_AFTER_ACTION 
+
 ### 应用主体生命周期
 
 ![Application Lifecycle](https://www.yiichina.com/doc/guide/2.0/images/application-lifecycle.png)
 
-
+1. 入口脚本加载应用主体配置数组。
+2. 入口脚本创建一个应用主体实例：
+   - 调用 [preInit()](https://www.yiichina.com/doc/api/2.0/yii-base-application#preInit()-detail) 配置几个高级别应用主体属性， 比如 [basePath](https://www.yiichina.com/doc/api/2.0/yii-base-module#$basePath-detail)。
+   - 注册 [error handler](https://www.yiichina.com/doc/api/2.0/yii-base-application#$errorHandler-detail) 错误处理方法。
+   - 配置应用主体属性。
+   - 调用 [init()](https://www.yiichina.com/doc/api/2.0/yii-base-application#init()-detail) 初始化，该函数会调用 [bootstrap()](https://www.yiichina.com/doc/api/2.0/yii-base-application#bootstrap()-detail) 运行引导启动组件。
+3. 入口脚本调用 yii\base\Application::run()运行应用主体:
+   - 触发 [EVENT_BEFORE_REQUEST](https://www.yiichina.com/doc/api/2.0/yii-base-application#EVENT_BEFORE_REQUEST-detail) 事件。
+   - 处理请求：解析请求 [路由](https://www.yiichina.com/doc/guide/2.0/runtime-routing) 和相关参数； 创建路由指定的模块、控制器和动作对应的类，并运行动作。
+   - 触发 [EVENT_AFTER_REQUEST](https://www.yiichina.com/doc/api/2.0/yii-base-application#EVENT_AFTER_REQUEST-detail) 事件。
+   - 发送响应到终端用户。
+4. 入口脚本接收应用主体传来的退出状态并完成请求的处理。
 
 ## 应用组件
 
@@ -169,6 +296,8 @@ $config = require __DIR__ . '/../config/web.php';
 如果想在每个请求处理过程都实例化某个组件即便它不会被访问，可在应用主体属性**bootstrap**里配置。
 
 ### 核心应用组件
+
+
 
 ## 控制器
 

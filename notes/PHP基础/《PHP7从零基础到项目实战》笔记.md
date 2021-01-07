@@ -9,8 +9,8 @@
 ### PHP的优势
 
 1. PHP学习入门快、开发成本低，语法相对简单，并且提供了丰富的类库，如用于图像处理的GD库、各种加密扩展（如OpenSSL和Mcrypt等）。
-2. PHP结合Linux、Nginx或Apache、MySQL可以方便快捷地搭建一套系统，PHP还支持直接调用系统命令，这样便可以用代码完成许多操作Linux的工作，如打包压缩、复制粘贴、重命名、执行Linux中grep查询筛选等。Nginx中的PHP采用fastCGI的形式运行脚本。
-3. PHP支持使用MySQL、MSSQL、SQLite等多种数据库。3种连接MySQL的扩展：MySQL扩展、MySQLi扩展和PDO扩展。
+2. PHP结合Linux、Nginx或Apache、MySQL可以方便快捷地搭建一套系统，PHP还支持直接调用系统命令，这样便可以用代码完成许多操作Linux的工作，如打包压缩、复制粘贴、重命名、执行Linux中grep查询筛选等。Nginx中的PHP采用**fastCGI**的形式运行脚本。
+3. PHP支持使用MySQL、MSSQL、SQLite等多种数据库。3种连接MySQL的扩展：**MySQL扩展、MySQLi扩展和PDO扩展**。
 
 MySQL扩展在PHP 5.5及以后的版本中不再支持；
 
@@ -40,23 +40,23 @@ PHP内核负责处理请求、完成文件流错误处理等操作。它可以�
 
 详细新特性：http://php.net/manual/zh/migration70.new-features.php 。
 
-declare(strict_type=1);
+- declare(strict_type=1);
 
-提升性能：PHP 7速度是PHP 5.6的两倍。
+- 提升性能：PHP 7速度是PHP 5.6的两倍。
 
-支持64位。
+- 支持64位。
 
-许多重大错误可以进行异常处理。
+- 许多重大错误可以进行异常处理。
 
-移除了旧的和不支持的SAPIs和扩展。
+- 移除了旧的和不支持的SAPIs和扩展。
 
-null合并操作符（? ?）。
+- null合并操作符（? ?）。
 
-结合比较运算符（<=>）。
+- 结合比较运算符（<=>）。
 
-标量类型声明。
+- 标量类型声明。
 
-匿名类。
+- 匿名类。
 
 # 2 PHP语言基础
 
@@ -114,9 +114,11 @@ PHP是一种弱类型的语言，在创建变量时无须指定变量类型，PH
 
 ### 声明
 
-> define()
->
-> const
+```php
+define()
+
+const
+```
 
 ### 预定义常量/魔术常量
 
@@ -150,11 +152,11 @@ PHP支持按值传递参数（默认），通过引用传递参数及默认参�
 
 在PHP 7中函数增加了返回值的类型声明。
 
-> function sum($a, $b): float {
->
-> ​	return $a + $b;
->
-> }
+```php
+function sum($a, $b): float {
+  return $a + $b;
+}
+```
 
 ## 4.4 可变函数
 
@@ -162,7 +164,14 @@ PHP支持按值传递参数（默认），通过引用传递参数及默认参�
 
 ## 4.5 内置函数
 
-查看加载的扩展库：phpinfo()， get_loaded_extensions()
+查看加载的扩展库：
+
+```php
+phpinfo()
+get_loaded_extensions()
+```
+
+
 
 ## 4.6 匿名函数/闭包函数
 
@@ -182,65 +191,87 @@ PHP支持按值传递参数（默认），通过引用传递参数及默认参�
 
 ### 改变字符串大小写
 
-> ucfirst
->
-> lcfirst
->
-> ucwords
->
-> strtoupper
->
-> strtolower
+```php
+ucfirst
+
+lcfirst
+
+ucwords
+
+strtoupper
+
+strtolower
+```
 
 ### 查找字符串
 
-> stripos
->
-> strpos
->
-> strripos
->
-> strrpos
+```php
+stripos
+
+strpos
+
+strripos
+
+strrpos
+```
 
 ### 替换字符串
 
-> str_ireplace()
->
-> str_replace()
->
-> substr_replace()
+```php
+str_ireplace()
+
+str_replace()
+
+substr_replace()
+```
 
 ### 截取字符串
 
-> substr
+```php
+substr
+```
 
 ### 去除字符串首尾空格和特殊字符
 
-> trim
->
-> ltrim
->
-> rtrim
+```php
+trim
+
+ltrim
+
+rtrim
+```
 
 ### 计算字符串的长度
 
-> strlen
+```php
+strlen
+```
 
 ### 转义和还原字符串
 
-> addslashes
+```php
+addslashes
+
+stripslashes
+```
 
 ### 重复一个字符串
 
-> str_repeat
+```php
+str_repeat
+```
 
 ### 随机打乱字符串
 
-> str_shuffle
+```php
+str_shuffle
+```
 
 ### 分割字符串
 
-> explode
+```php
+explode
+```
 
 # 6 数组
 
@@ -250,97 +281,128 @@ PHP中对多维数组没有上限的固定限制，但是随着维数的增加�
 
 ### 检查数组中是否存在某个值
 
-> in_array
+```php
+bool in_array ( mixed $needle , array $haystack [, bool $strict = FALSE ] )
+```
 
 ### 数组转换为字符串
 
-> implode
+```php
+string implode ( string $glue , array $pieces )
+```
 
 ### 计算数组中的单元数目
 
-> count (可通过第二个参数决定是否递归计数；还可以计算对象中的属性个数)
+```php
+int count ( mixed $var [, int $mode = COUNT_NORMAL ] )
+// 第二个参数决定是否递归计数；还可以计算对象中的属性个数  
+```
 
 ### 数组当前单元和数组指针
 
-> current()
->
-> end()
->
-> prev()
->
-> reset()
->
-> next()
+```php
+current()
+
+end()
+
+prev()
+
+reset()
+
+next()
+```
 
 ### 数组中的键名和值
 
-> key()
->
-> array_key_exists()
->
-> array_keys()
->
-> array_values()
->
-> array_search()
+```php
+key()
+
+array_key_exists()
+
+array_keys()
+
+array_values()
+// 搜索给定值返回键名
+array_search()
+```
 
 ### 填补数组
 
-> array_pad()
->
-> array_fill()
->
-> array_fill_keys()
+```php
+// 用值将数组填补到指定长度
+array array_pad ( array $input , int $pad_size , mixed $pad_value )
+
+// 用给定的值填充数组
+array array_fill ( int $start_index , int $num , mixed $value )
+
+// 使用指定的键和值填充数组
+array array_fill_keys(array $keys, mixed $value)
+```
 
 ### 从数组中随机取出一个或多个单元
 
-> array_rand()
+```php
+array_rand()
+```
 
 ### 数组排序与打乱数组
 
-> sort()
->
-> asort()
->
-> arsort()
->
-> rsort()
->
-> shuffle()
+```php
+sort()
+
+asort()
+
+arsort()
+
+rsort()
+
+shuffle()
+```
 
 ### 遍历数组
 
->  for、foreach、each、list
+```php
+for、foreach、each、list
+```
 
 ### 数组的拆分与合并
 
-> array_chunk()
->
-> array_merge()
+```php
+array_chunk()
+
+array_merge()
+```
 
 ### 增加/删除数组中的元素
 
-> array_unshift()
->
-> array_shift()
->
-> array_push()
->
-> array_pop()
+```php
+array_unshift()
+
+array_shift()
+
+array_push()
+
+array_pop()
+```
+
+
 
 ### 其他
 
-> array_slice()
->
-> array_splice()
->
-> is_array()
->
-> array_sum()
->
-> array_product()
->
-> array_flip()
+```php
+array_slice()
+
+array_splice()
+
+is_array()
+
+array_sum()
+
+// 计算数组中所有值的成绩并返回(字符串算作0)
+number array_product(array $array)
+
+array_flip()
+```
 
 ## 6.4 系统预定义数组
 
@@ -366,13 +428,15 @@ $_SERVER中的项由Web服务器创建。
 
 ## 9.1 类
 
-“::”符号3中使用情况：
+`::`符号3中使用情况：
 
-> parent::
->
-> self::
->
-> 类名::
+```php
+parent::
+
+self::
+
+类名::
+```
 
 ### 静态属性和静态方法
 
@@ -382,9 +446,11 @@ $_SERVER中的项由Web服务器创建。
 
 析构方法在垃圾回收程序执行之前被执行。
 
-> __construct
->
-> __desctruct
+```php
+__construct
+
+__desctruct
+```
 
 ## 9.2 封装和继承特性
 
@@ -403,9 +469,11 @@ __unset()
 
 ## 9.4 自动加载文件
 
-> __autoload()
->
-> spl_autoload_register()
+```php
+void __autoload ( string $class )
+  
+bool spl_autoload_register ([ callable $autoload_function [, bool $throw = true [, bool $prepend = false ]]] )
+```
 
 ## 9.5 抽象类和接口
 
@@ -491,7 +559,11 @@ set_error_handler ( callable $error_handler [, int $error_types = E_ALL | E_STRI
 
 ### PHP 7中的错误处理
 
-> Error
+```php
+Error
+```
+
+
 
 # 12 图像处理
 
@@ -511,57 +583,79 @@ GD库
 
 ### 创建画布
 
-> imagecreate ( int $width , int $height ) : resource
+```php
+imagecreate ( int $width , int $height ) : resource
 
-> imagecreatetruecolor ( int $width , int $height ) : resource
+imagecreatetruecolor ( int $width , int $height ) : resource
+```
+
+
 
 ### 定义颜色
 
-> imagecolorallocate ( resource $image , int $red , int $green , int $blue ) : int
+```php
+imagecolorallocate ( resource $image , int $red , int $green , int $blue ) : int
 
->  imagecolorallocatealpha ( resource $image , int $red , int $green , int $blue , int $alpha ) : int
+imagecolorallocatealpha ( resource $image , int $red , int $green , int $blue , int $alpha ) : int
+```
+
+
 
 ### 绘制图形
 
-> // 椭圆
->
-> imageellipse ( resource $image , int $cx , int $cy , int $width , int $height , int $color ) : bool
->
-> // 多边形
->
-> imagefilledpolygon ( resource $image , array $points , int $num_points , int $color ) : bool
->
-> // 矩形
->
-> imagefilledrectangle ( resource $image , int $x1 , int $y1 , int $x2 , int $y2 , int $color ) : bool
->
-> // 椭圆弧
->
-> imagearc ( resource $image , int $cx , int $cy , int $width , int $height , int $start , int $end , int $color ) : bool
+```php
+// 椭圆
+imageellipse ( resource $image , int $cx , int $cy , int $width , int $height , int $color ) : bool
+
+// 多边形
+imagefilledpolygon ( resource $image , array $points , int $num_points , int $color ) : bool
+
+// 矩形
+imagefilledrectangle ( resource $image , int $x1 , int $y1 , int $x2 , int $y2 , int $color ) : bool
+
+// 椭圆弧
+imagearc ( resource $image , int $cx , int $cy , int $width , int $height , int $start , int $end , int $color ) : bool
+```
+
+
 
 ### 绘制文字
 
-> imagechar
->
-> imagecharup
->
-> imagefttext
+```php
+imagechar
+
+imagecharup
+
+imagefttext
+```
 
 ## 12.3 图片处理
 
 ### 复制图像
 
+```php
 imagecopy
 
 imagecreatefromjpeg
+```
+
+
 
 ### 旋转图像
 
+```php
 imagerotate
+```
+
+
 
 ### 图像水印
 
+```php
 imagecopymerge
+```
+
+
 
 ## 12.4 图像验证码
 
@@ -571,11 +665,14 @@ imagecopymerge
 
 ### 判断文件类型
 
-> filetype ( string $filename ) : string
->
-> 可能的值有fifo、char、dir、block、link、file和unknown
+```php
+filetype ( string $filename ) : string
+// 可能的值有fifo、char、dir、block、link、file和unknown
 
-> is_dir ( string $filename ) : bool
+is_dir ( string $filename ) : bool
+```
+
+
 
 ### 创建目录
 
@@ -593,23 +690,32 @@ rmdir ( string $dirname [, resource $context ] ) : bool
 
 ### 打开读取和关闭目录
 
-> opendir
->
-> readdir
->
-> closedir
->
-> scandir()，列出指定路径中的文件和目录
+```php
+opendir
+
+readdir
+
+closedir
+
+// 列出指定路径中的文件和目录
+scandir()
+```
 
 ### 获得路径中目录部分
 
-> dirname()
+```php
+dirname()
+```
+
+
 
 ### 目录磁盘空间
 
-> disk_free_space()
->
-> disk_total_space()
+```php
+disk_free_space()
+
+disk_total_space()
+```
 
 ## 13.2 文件操作
 
@@ -625,43 +731,53 @@ fopen ( string $filename , string $mode [, bool $use_include_path = FALSE [, res
 
 ### 读取文件
 
-> fgets ( resource $handle [, int $length ] ) : string
->
-> // 从文件指针中读取一行
->
-> fgetc ( resource $handle ) : string
->
-> // 从文件指针中读取字符
+```php
+fgets ( resource $handle [, int $length ] ) : string
+// 从文件指针中读取一行
+
+fgetc ( resource $handle ) : string
+// 从文件指针中读取字符
+```
 
 ### 获得文件属性
 
-> fileatime
->
-> filemtime
->
-> filesize
->
-> filetype
->
-> stat
+```php
+fileatime
+
+filemtime
+
+filesize
+
+filetype
+
+stat
+```
+
+
 
 ### 复制、删除、移动/重命名文件
 
-> copy
->
-> unlink
->
-> rename
+```php
+copy
+
+unlink
+
+rename
+```
+
+
 
 ## 13.3 文件指针
 
-> rewind()
->
-> fseek()
->
-> ftell()
->
-> feof()
+```php
+rewind()
+
+fseek()
+
+ftell()
+
+feof()
+```
 
 ## 13.4 文件上传
 
@@ -699,19 +815,31 @@ Cookie经常用来存储一些**不敏感的信息**，如用来防止刷票、�
 
 Session存储在服务端，本质上和Cookie没有区别，都是针对HTTP协议的局限性而提出的一种**保持客户端和服务端间会话状态的机制**。Session经常用来在**网站的上下文间实现页面变量的传递、用户身份认证、程序状态记录**等，常见的有配合Cookie使用、实现**保存用户的登录状态或者记录用户的购物下单信息**等。
 
-> session_start()
->
-> session.auto_start
->
-> PHPSESSID
+```php
+session_start()
+
+session.auto_start
+
+PHPSESSID
+```
+
+
 
 ### Session的工作原理和存储机制
 
-> session.save_path
+```php
+session.save_path
+```
+
+
 
 ### 使用Redis存储Session
 
-> session_set_save_handle()
+```php
+session_set_save_handle()
+```
+
+
 
 # 15 MySQL数据库的使用
 

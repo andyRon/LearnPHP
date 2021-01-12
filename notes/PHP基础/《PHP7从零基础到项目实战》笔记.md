@@ -1,3 +1,5 @@
+[PHP官方文档](https://www.php.net/manual/zh/index.php)
+
 《PHP7从零基础到项目实战》笔记
 ---------
 
@@ -164,66 +166,160 @@ function sum($a, $b): float {
 
 ## 4.5 内置函数
 
-查看加载的扩展库：
+一些函数需要特定扩展，查看加载的扩展库：
 
 ```php
-phpinfo()
-get_loaded_extensions()
+phpinfo();
+get_loaded_extensions();
 ```
 
 
 
 ## 4.6 匿名函数/闭包函数
 
-经常用作回调函数（callback）参数的值。
+**匿名函数**（Anonymous functions）也叫**闭包函数**（closures），允许临时创建一个没有指定名称的函数，经常用作**回调函数**（callback）参数的值。
+
+```php
+echo preg_replace_callback('~-([a-z])~', function ($match) {
+    return strtoupper($match[1]);
+}, "hello-world");
+// 输出 helloWorld
+```
 
 闭包函数也可以作为变量的值来使用，PHP会自动把此种表达式转换成内置类Closure的对象实例。
 
+```php
+$greet = function ($name) {
+    echo "hello $name \n";
+};
+$greet('World');
+$greet('PHP');
+// 输出 hello World hello PHP
+```
+
+闭包可以从父作用域中继承变量，这时需要使用关键词use，示例：
+
+```php
+$message = 'hello';
+// 没有 "use"
+$example = function () {
+    var_dump($message);
+};
+echo $example();  //输出值为null
+// 继承 $message
+$example = function () use ($message) {
+    var_dump($message);
+};
+echo $example();  //输出结果hello
+
+// 当函数被定义的时候就继承了作用域中变量的值，而不是在调用时才继承
+// 此时改变 $message的值对继承没有影响
+$message = 'world';
+echo $example();  // 输出结果hello
+// 重置 $message的值为"hello"
+$message = 'hello';
+// 继承引用
+$example = function () use (&$message) {
+    var_dump($message);
+};
+echo $example(); //输出结果hello
+// 父作用域中 $message的值被改变，当函数被调用时$message的值发生改变
+// 注意与非继承引用的区别
+$message = 'world';
+echo $example();  // 输出结果world
+// 闭包也可接收参数
+$example = function ($arg) use ($message) {
+    var_dump($arg . ' ' . $message);
+};
+$example("hello");  // 输出结果hello world
+```
+
+
+
 ## 4.7 递归与迭代
+
+**递归**就是程序调用自身、函数不断引用自身，直到引用的对象已知。构成递归需满足以下两个条件：
+
+1. 子问题需与原始问题为同样的事，且更为简单。
+2. 不能无限制地调用本身，必须有一个出口，化简为非递归状况处理。
+
+斐波那契数列就是一个很好的例子：
+
+```php
+function readd($n)
+{
+    if ($n > 2) {
+        $arr[$n] = readd($n - 2) + readd($n - 1);  // 递归调用自身
+        return $arr[$n];
+    } else {
+        return 1;
+    }
+}
+echo readd(30);
+```
+
+**迭代**就是利用变量的原值推算出变量的一个新值：
+
+```php
+function diedai($n)
+{
+    for ($i = 0, $j = 0; $i < $n; $i++) {
+        $j = $j + $i;
+    }
+    return $j;
+}
+echo diedai(4);
+```
+
+
 
 # 5 字符串
 
 ## 5.1 单引号和双引号的区别
 
-在使用单引号字符串时，字符串中需要转义的特殊字符只有反斜杠和单引号本身，单引号不能识别插入的变量。相比双引号，这种定义字符串的方式不但直观而且速度快。
+在使用单引号字符串时，字符串中需要转义的特殊字符只有反斜杠和单引号本身，单引号不能识别插入的变量。相比双引号，这种定义字符串的方式**不但直观而且速度快**。
+
+## 5.2 字符串连接符
+
+`.`
 
 ## 5.3 字符串操作
 
 ### 改变字符串大小写
 
 ```php
-ucfirst
-
+ucfirst 将字符串的首字母转换为大写
 lcfirst
-
-ucwords
-
+ucwords 将字符串中每个单词的首字母转换为大写
 strtoupper
-
 strtolower
 ```
 
 ### 查找字符串
 
 ```php
-stripos
-
-strpos
-
+// 查找字符串中某部分字符串首次出现的位置（不区分大小写）
+stripos ( string $haystack , string $needle , int $offset = 0 ) : int
+// 区分大小写
+strpos ( string $haystack , mixed $needle , int $offset = 0 ) : int
+// 计算指定字符串在目标字符串中最后一次出现的位置（不区分大小写）
 strripos
-
+// 区分大小写
 strrpos
 ```
 
 ### 替换字符串
 
 ```php
+//  subject（字符串或数组）中全部的 search 都被 replace 替换
+str_replace ( mixed $search , mixed $replace , mixed $subject , int &$count = ? ) : mixed
+// 不区分大小写
 str_ireplace()
-
-str_replace()
-
-substr_replace()
+  
+substr_replace ( mixed $string , mixed $replacement , mixed $start , mixed $length = ? ) : mixed
 ```
+
+其它还有正则替换的两个函数：ereg_replace() 和 preg_replace()。
 
 ### 截取字符串
 
@@ -270,14 +366,54 @@ str_shuffle
 ### 分割字符串
 
 ```php
-explode
+explode ( string $delimiter , string $string , int $limit = ? ) : array
 ```
 
 # 6 数组
 
 PHP中对多维数组没有上限的固定限制，但是随着维数的增加，数组会越来越复杂，对于阅读调试和维护都会稍微困难些。
 
-## 6.3 数组操作
+PHP有两种数组：索引数组和关联数组。
+
+## 创建数组
+
+```php
+$arr['a'] = 'red';
+$arr['b'] = 'orange';
+$arr['c'] = 'blue';
+$arr['d'] = 'green';
+var_dump($arr);
+echo "<br/>";
+
+$array = ['dog', 'cat', 'wolf', 'dragon'];
+var_dump($array);
+echo "<br/>";
+
+$bar[] = 'a';
+$bar[] = 'b';
+$bar[] = 'c';
+var_dump($bar);
+```
+
+```php
+range ( mixed $start , mixed $end , int|float $step = 1 ) : array
+```
+
+```php
+$a = range(0, 5);
+$b = range(0,5,2);
+$c = range(a, g);
+$d = range(a, g,2);
+echo "<pre>";
+print_r($a);
+print_r($b);
+print_r($c);
+print_r($d);
+```
+
+
+
+## 数组操作
 
 ### 检查数组中是否存在某个值
 
@@ -302,28 +438,25 @@ int count ( mixed $var [, int $mode = COUNT_NORMAL ] )
 
 ```php
 current()
-
 end()
-
 prev()
-
 reset()
-
 next()
 ```
 
 ### 数组中的键名和值
 
 ```php
-key()
+// 返回数组中内部指针指向的当前单元的键名
+key ( array $array ) : mixed
 
 array_key_exists()
 
-array_keys()
+array_keys ( array $array , mixed $search_value = null , bool $strict = false ) : array
 
 array_values()
-// 搜索给定值返回键名
-array_search()
+// 搜索给定的值，如果成功则返回首个相应的键名，否则返回false
+array_search ( mixed $needle , array $haystack , bool $strict = false ) : mixed
 ```
 
 ### 填补数组
@@ -390,7 +523,8 @@ array_pop()
 ### 其他
 
 ```php
-array_slice()
+// 从数组中取出一段
+array_slice ( array $array , int $offset , int $length = null , bool $preserve_keys = false ) : array
 
 array_splice()
 
@@ -408,23 +542,65 @@ array_flip()
 
 ### `$_SERVER`
 
-$_SERVER中的项由Web服务器创建。
+$_SERVER中的项由Web服务器创建，包含诸如头信息（header）、路径（path）及脚本位置（script locations）信息等
 
 ![](../../images/learnphp-004.jpg)
 
 ### `$_GET`和`$_POST`
 
+`$_GET`和`$_POST`可分别用来接收这两种方式传递过来的数据。
+
 ### `$_FILES`
+
+用于获取通过POST方法上传文件的相关信息。
 
 ### `$_SESSION`和`$_COOKIE`
 
 ### `$_REQUEST[]`
 
+
+
 # 7 时间与日期
+
+服务器的时间设置默认是格林尼治时间（零时区时间），比北京时间少8个小时，PHP有关函数默认获取到的时间就是这个时间，在配置文件php.ini中设置和通过date_default_timezone_set函数设置。
+
+## 获取当前时间
+
+```php
+gmmktime()
+mktime()
+microtime()
+time()
+// 返回一个根据 timestamp 得出的包含有日期信息的关联数组 array。如果没有给出时间戳则认为是当前本地时间。
+getdate ( int $timestamp = time() ) : array
+
+```
+
+## 常用时间处理方法
+
+```php
+// 格式化时间显示
+date ( string $format , int $timestamp = ? ) : string
+  
+// 将任何英文文本的日期时间描述解析为UNIX时间戳
+strtotime ( string $datetime , int $now = time() ) : int
+```
+
+## 验证日期
+
+```php
+checkdate ( int $month , int $day , int $year ) : bool
+```
 
 # 8 表单
 
+## 表单的种类
+
+
+
 # 9 类与对象
+
+面向对象编程（Object Oriented Programming, OOP）是一种被很多语言广泛支持的编程模式，有别于之前的面向过程编程。面向对象编程的思想是把具有相似特性的事物抽象成类，通过对类的属性和方法的定义实现代码共用。其将实现某一特定功能的代码部分进行**封装**，这样可被多处调用，而且封装的粒度越细小被重用的概率越大。面向对象编程的**继承性**和**多态性**也提高了代码的复用度。总之，面向对象编程充分地体现了软件编程中的“高内聚，低耦合”的思想。
 
 ## 9.1 类
 
@@ -477,9 +653,20 @@ bool spl_autoload_register ([ callable $autoload_function [, bool $throw = true 
 
 ## 9.5 抽象类和接口
 
+```php
+abstract
+  
+interface
+```
+
 ## 9.6 类中的关键字
 
-> final、clone、instanceof、“==”和“===”
+```php
+final
+clone
+instanceof
+==  ===
+```
 
 # 10 正则表达式
 
@@ -487,6 +674,34 @@ bool spl_autoload_register ([ callable $autoload_function [, bool $throw = true 
 
 1. PCRE（PerlCompatible Regular Expression）库提供、与Perl语言兼容的正则表达式函数，以“preg_”为函数的前缀名称；
 2. POSIX（PortableOperating System Interface）扩展语法正则表达式函数，以“ereg_”为函数的前缀。
+
+匹配与查找
+
+```php
+preg_match()
+  
+preg_match_all()
+  
+preg_grep()
+```
+
+搜索与替换
+
+```php
+preg_replace()
+  
+preg_filter()
+```
+
+分割与转义
+
+```php
+preg_split()
+
+preg_quote()
+```
+
+
 
 # 11 错误异常处理
 
@@ -548,8 +763,6 @@ error_log ( string $message [, int $message_type = 0 [, string $destination [, s
 ```
 
 ### 自定义错误处理函数
-
-set_error_handler()
 
 ```php
 set_error_handler ( callable $error_handler [, int $error_types = E_ALL | E_STRICT ] ) : mixed
@@ -659,6 +872,53 @@ imagecopymerge
 
 ## 12.4 图像验证码
 
+**code.php**：
+
+```php
+<?php
+function random($len)
+{
+    $srcstr="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    mt_srand();
+    $strs="";
+    for($i=0; $i<$len; $i++){
+        $strs.=$srcstr[mt_rand(0,35)];
+    }
+    return strtoupper($strs);
+}
+$str=random(4);     //随机生成的字符串
+$width = 50;         //验证码图片的宽度
+$height = 25;        //验证码图片的高度
+@header("Content-Type:image/png");
+//echo $str;
+$im=imagecreate($width, $height);
+//背景色
+$back=imagecolorallocate($im,0xFF,0xFF,0xFF);
+//模糊点颜色
+$pix=imagecolorallocate($im,187,230,247);
+//字体色
+$font=imagecolorallocate($im,41,163,238);
+//绘制模糊作用的点
+mt_srand();
+for($i=0; $i<1000; $i++)
+{
+    imagesetpixel($im, mt_rand(0, $width), mt_rand(0, $height), $pix);
+}
+imagestring($im, 5, 7, 5, $str, $font);
+imagerectangle($im,0,0, $width-1, $height-1, $font);
+imagepng($im);
+imagedestroy($im);
+```
+
+在另外一个文件index.php中，将code.php文件作为HTML标签img的src属性值：
+
+```php
+<?php
+echo "<img src=code.php>";
+```
+
+
+
 # 13 目录文件操作
 
 ## 13.1 目录
@@ -672,8 +932,6 @@ filetype ( string $filename ) : string
 is_dir ( string $filename ) : bool
 ```
 
-
-
 ### 创建目录
 
 ```php
@@ -685,8 +943,6 @@ mkdir ( string $pathname [, int $mode = 0777 [, bool $recursive = FALSE [, resou
 ```php
 rmdir ( string $dirname [, resource $context ] ) : bool
 ```
-
-
 
 ### 打开读取和关闭目录
 
@@ -704,10 +960,8 @@ scandir()
 ### 获得路径中目录部分
 
 ```php
-dirname()
+dirname ( string $path , int $levels = 1 ) : string
 ```
-
-
 
 ### 目录磁盘空间
 
@@ -724,8 +978,6 @@ disk_total_space()
 ```php
 fopen ( string $filename , string $mode [, bool $use_include_path = FALSE [, resource $context ]] ) : resource
 ```
-
-
 
 ![](../../images/learnphp-006.jpg)
 
@@ -863,6 +1115,10 @@ session_set_save_handle()
 
 ## 15.7 PHP操作MySQL数据库
 
+MySQLi和PDO
+
+??
+
 # 16 PHP与Redis数据库
 
 在一些高并发大流量的网站系统中，常将Redis作为**消息队列**使用，以减轻MySQL的读写压力。并且Redis提供的数据类型能够满足绝大多数的应用场景，支持数**据持久化、主从同步**等。
@@ -870,6 +1126,12 @@ session_set_save_handle()
 ## 16.3 Redis数据类型
 
 string（字符串）、hash（哈希）、list（列表）、set（集合）及zset（sorted set，有序集合）
+
+- string:redis最基本的类型，一个key对应一个value。string类型是二进制安全的，redis的string可以包含任何数据，比如JPG图片或者序列化的对象。
+- hash：一个键值对集合，是一个string类型的field和value的映射表，特别适合用于存储对象。
+- list：简单的字符串列表，按照插入顺序排序。你可以添加一个元素到列表的头部（左边）或者尾部（右边），以及对链表的两端进行pop/push操作。
+- set:string类型的无序集合。集合是通过哈希表实现的，所以添加、删除、查找的复杂度都是O(1)。
+- zset：和set一样也是string类型元素的集合，且不允许有重复的成员；不同的是每个元素都会关联一个double类型的分数，redis通过分数来为集合中的成员进行从小到大的排序。zset的成员是唯一的，但分数（score）却可以重复。
 
 ### string
 
@@ -921,11 +1183,17 @@ XML是一种数据的表现形式，在**信息交换和传递**中起到非常�
 
 ## 17.3 JSON的使用
 
-### json_encode
+```php
+json_encode
 
-### json_decode
+json_decode
+```
+
+
 
 # 18 MVC与ThinkPHP框架
+
+??
 
 # 19 PHP设计模式
 

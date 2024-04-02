@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">	
+<meta name="keywords" content="明日科技,thinkphp5.0,编程e学网" />
+<meta name="description" content="明日科技,thinkphp5.0,编程e学网" />
+<title>编程e学网</title>
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="stylesheet" type="text/css" href="/static/index/css/public.css" />
+<link rel="stylesheet" type="text/css" href="/static/index/css/index.css" />
+<link rel="stylesheet" href="/static/admin/css/admin.css"  />
+</head>
+<body>
+   {include file="public/top"/}
+    <!--开始-->
+    	<div class="admin_body">
+        	{include file="public/left"/}
+            <div class="list">
+            	<!--开始-->
+                   <div class="box_tab"><div class="list_title">账号管理</div></div>
+                   <form name="myform" id="myform" action="{:url('User/saveAccount')}">
+                    <input type="hidden"  name="id" value="{:session('user_id')}"/>
+                    <div class="list_name" style="margin:30px 50px 10px 250px;">
+                        用户名：
+                        <input type="text"  name="username" id="username" class="select_input2" placeholder="新用户名" style="width:250px;" autocomplete="off"/>
+                    </div>
+                                
+                    <div class="list_name" style="margin:20px 50px 30px 256px;">
+                        密&nbsp;&nbsp;码：
+                        <input type="password"  name="password" id="password" class="select_input2" placeholder="新密码" style="width:250px;"/>
+                    </div>
+                                                         
+                    <div class="submit_button"><a href="javascript:" id="submit" onClick="check();">保存</a></div>
+                    </form>
+                <!--结束-->
+            </div>
+        </div>
+    <!--结束-->
+   {include file="public/foot"/}
+<script type="text/javascript">
+    function check(){
+	   var username = $.trim($('#username').val());
+	   if(username == ''){
+	      layer.msg('请输入用户名');
+		  $('#username').focus();
+		  return false;
+	   }	   
+	   if(!username.match(/^[\u4E00-\u9FA5a-zA-Z0-9_]{3,16}$/)) { 
+	      layer.msg('用户名只能是中英文、数字和下划线,长度3-16位');
+		  $("#username").focus();
+		  return false;
+	   }
+	   var password = $.trim($('#password').val());
+	   if(password == ''){
+	      layer.msg('请输入密码');
+		  $('#password').focus();
+		  return false;
+	   }	   
+	   if(!password.match(/^[a-zA-Z0-9_]{6,32}$/)) { 
+	      layer.msg('密码只能是英文、数字和下划线,长度6-32位');
+		  $("#password").focus();
+		  return false;
+	   }	   	   
+	   $.ajax({
+			type:"POST",
+			url :$('#myform').attr('action'),
+			data:$('#myform').serialize(),
+			beforeSend: function() {
+				$("#submit").removeAttr("onClick");
+			},
+			success: function(res){
+				if(res.status){
+					layer.msg('保存成功！',{time:1000},function(){
+						window.location.href = window.location.href;
+					});
+				}else{
+					$("#submit").attr("onClick","check()");
+					layer.msg(res.msg);
+				}
+			}
+		});	   
+	}	
+</script>
+</body>
+</html>

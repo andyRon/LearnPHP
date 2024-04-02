@@ -1,0 +1,20 @@
+<header class="navbar-wrapper">
+	<div class="navbar navbar-fixed-top">
+		<div class="container-fluid cl"> 
+          <a href="{:url('Index/index')}" class="logo navbar-logo f-l mr-10 hidden-xs">E-learning Program</a>
+			<nav id="Hui-userbar" class="nav navbar-nav navbar-userbar hidden-xs">
+				<ul class="cl">
+                    <li id="top_time" style="margin-right:30px;"></li>
+					<li class="dropDown dropDown_hover"> 
+                        <a href="javascript:;" class="dropDown_A"> <i class="Hui-iconfont">&#xe62d;</i> {:session("admin_user_name")} <i class="Hui-iconfont">&#xe6d5;</i></a>
+						<ul class="dropDown-menu menu radius box-shadow">
+							<li><a href="javascript:;" onClick="layer_show('账号管理','{:url("Index/account")}',500,250)">账号管理</a></li>
+						</ul>
+					</li>
+					<li> <a href="{:url('Login/logout')}">退出</a> </li>
+                    
+				</ul>
+			</nav>
+		</div>
+	</div>
+</header>

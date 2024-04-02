@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="keywords" content="明日科技,thinkphp5.0,编程e学网" />
+<meta name="description" content="明日科技,thinkphp5.0,编程e学网" />
+<title>编程e学网</title>
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="stylesheet" type="text/css" href="/static/index/css/public.css" />
+<link rel="stylesheet" type="text/css" href="/static/index/css/index.css" />
+<link rel="stylesheet" type="text/css" href="/static/index/css/language.css" />
+</head>
+<body>
+{include file="public/top"/}
+<div class="test_bottom"> 
+  <div class="test_type"><i></i><span>视 / 频 / 列 / 表</span><i></i></div>
+  <div class="test_box">
+    {notempty name="datas"} 
+    <ul>    
+     {foreach name="datas" key="key" item="item"}
+      <li>
+        <div class="box_top"> 
+          {if condition="checkRoot($item['id'])"}
+           <a href="{:url('Index/view',['id'=>$item['id']])}">第 {$key+1} 节</a> 
+          {else/}
+           <a href="javascript:" onClick="login(0)">第 {$key+1} 节</a> 
+          {/if}
+        </div>
+        <div class="box_bottom">
+           {if condition="checkRoot($item['id'])"}
+            <h2><a href="{:url('Index/view',['id'=>$item['id']])}">{$item.title}</a></h2>
+           {else/}
+            <h2><a href="javascript:" onClick="login(0)">{$item.title}</a></h2>
+           {/if}
+           <span> <img src="/static/index/images/user.png">{$item.id|getVideoLearnerTotal}人观看 </span>
+        </div>
+      </li>
+     {/foreach}
+    </ul>
+    {else/}
+        <center>暂无视频，敬请期待！</center>
+     {/notempty}
+  </div>
+</div>
+{include file="public/foot"/}
+</body>
+</html>

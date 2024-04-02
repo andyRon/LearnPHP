@@ -1,0 +1,150 @@
+﻿{include file="/public/_meta,/public/_header,/public/_menu"}
+
+<section class="Hui-article-box">
+	<nav class="breadcrumb">
+    <i class="Hui-iconfont">&#xe67f;</i> 首页 <span class="c-gray en">&gt;</span> 资源管理 <span class="c-gray en">&gt;</span> 资源列表 
+    <a class="btn btn-success radius r" style="line-height:1.6em;margin-top:3px" href="javascript:location.replace(location.href);" title="刷新" ><i class="Hui-iconfont">&#xe68f;</i></a>
+    </nav>
+	<div class="Hui-article">
+		<article class="cl pd-20">
+			<div class="text-c">
+              <form  action="{:url('index')}" method="post" id="form-search">	
+                <span class="select-box inline">
+				  <select name="course_id" class="select" style="width:200px">
+                    <option value="0">所属课程</option>
+                    {foreach name="courses" item="item"}
+					<option value="{$item.id}" {if condition="isset($course_id) && ($course_id eq $item.id)"}selected{/if}>{$item.name}</option>
+                    {/foreach}				
+				  </select>
+			    </span>			
+				<input type="text" class="input-text" style="width:200px" placeholder="输入资源名称" name="title" autocomplete="off" value="{$title|default=''}">
+				<button type="submit" class="btn btn-success radius" id="search"><i class="Hui-iconfont">&#xe665;</i> 搜索 </button>
+              </form>
+			</div>
+			<div class="cl pd-5 bg-1 bk-gray mt-20"> 
+               <span class="l">
+                 <a href="javascript:;" class="btn btn-danger radius"><i class="Hui-iconfont">&#xe6e2;</i> 批量删除</a> 
+                 <a href="{:url('add_resource')}" class="btn btn-primary radius"><i class="Hui-iconfont">&#xe600;</i> 添加资源</a>
+               </span>
+               <span class="r">共有数据：<strong>{$totalCount}</strong> 条</span> 
+            </div>
+			<div class="mt-20">
+               {notempty name="datas"}
+				<table class="table table-border table-bordered table-sort">
+					<thead>
+						<tr class="text-c" style="height:43px;">
+							<th width="60"><input type="checkbox" id="allc1"/></th>
+							<th width="100">ID</th>
+                            <th width="200">所属课程</th>
+							<th>资源名称</th>
+                            <th width="100">排序值</th>
+							<th width="150">添加时间</th>
+							<th width="100">发布状态</th>
+							<th width="150">操作</th>
+						</tr>
+					</thead>
+					<tbody>
+                      {foreach name="datas" item="item"}
+						<tr class="text-c">
+							<td><input type="checkbox" name="ids[]" class="list_box ids" id="r_{$item.id}" value="{$item.id}"/></td>
+							<td>{$item.id}</td>
+                            <td>{$item.name}</td>
+							<td class="text-l">{$item.title}</td>
+                            <td>{$item.sort}</td>
+							<td>{$item.addtime|date="Y-m-d H:i:s"}</td>
+							<td class="td-status"><span class="label label-success radius">{eq name="item.status" value="1"}正常{else/}关闭{/eq}</span></td>
+							<td class="td-manage">
+                              <a class="ml-5" href="{:url('add_resource',['id'=>$item.id])}" title="编辑">编辑</a> 
+                              <a class="ml-5" href="javascript:;" onClick="del_resource('{$item.id}')"  title="删除">删除</a>
+                            </td>
+						 </tr>
+                       {/foreach}
+					</tbody>
+				 </table>
+                 {else/}
+                     <center>暂无资源</center>
+                 {/notempty}
+			</div>
+            <div class="admin_page">{$datas->render()|raw}</div>
+		</article>
+	</div>
+</section>
+
+{include file="/public/_footer"}
+
+<script type="text/javascript">
+$(function(){
+     /*左侧菜单*/
+	 var nav = "{$nav}";
+	 $('#menu-'+nav+' dt').addClass('selected');
+	 $('#menu-'+nav+' dd').css("display","block");
+	 $('#menu-'+nav+' li').addClass('current');
+	 $('tr').hover(function(){
+		$(this).css('background','#EAEAEA');
+	 },function(){
+		$(this).css('background','#ffffff');
+	 });
+	 //全选的实现
+	 $("#allc1").click(function(){
+		$(".ids").prop("checked", this.checked);
+	 });
+	 $(".ids").click(function(){
+		var option = $(".ids"); 
+		option.each(function(i){ 
+			if(!this.checked){ 
+				$("#allc1").prop("checked", false);
+				return false;
+			}else{
+				$("#allc1").prop("checked", true);
+			}
+		});
+	 });
+	 //全选删除
+	 $('.btn-danger').click(function(){
+		var ids = $('.ids:checked');
+		if(ids.length == 0){
+			layer.msg('请选择要删除的选项',{time:1000});
+			return false;
+		}
+		url = "{:url('del_resources')}";
+		layer.confirm('确定删除选中的选项吗？',{title:'提示',icon:3},function(){
+			var query = ids.serialize();
+			$.ajax({
+				type: "POST",
+				url : url,
+				data: query,
+				success: function(data){
+					if(data.status){
+					   layer.msg(data.msg,{time:1000},function(){ 
+						  window.location.href = window.location.href;
+					   });
+					}else{
+					   layer.msg(data.msg);
+					}
+				}
+			});
+		});
+		return false;
+	 });
+});
+function del_resource(id){
+   layer.confirm('确定删除此条信息么？',{btn:['确定','取消'],icon:3,title:'提示'},function(){
+		$.ajax({
+			type: "POST",
+			url : "{:url('del_resource')}",
+			data: {"id":id},
+			success: function(res){
+				if(res.status){
+					layer.msg('删除成功',{time:600},function(){
+						window.location.href = window.location.href;
+					});
+				}else{
+					layer.msg(res.msg);
+				}
+			}
+		});
+	});
+}
+</script>
+</body>
+</html>

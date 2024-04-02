@@ -1,0 +1,26 @@
+1、将压缩包拷贝到环境根目录下，并进行解压；
+
+2、在mysql数据库中新建一个数据库，取名为 e-learningprogram；
+
+3、将根目录下e-learningprogram.sql的数据表导入到 e-learningprogram 数据库中；
+
+4、修改根目录下config文件夹下的 database.php 文件，将数据库密码改为你本地数据库密码，本项目默认数据库密码为111；
+
+5. 配置虚拟主机。
+服务器名称为: www.e-learning.com
+对应的文件路径为： e:/wamp/www/e-learning/public   （请改外你本机路径）
+
+6. 修改上传文件最大容量。后台上传视频文件通常会很多，所以要修改PHP的配置文件php.ini。根据上传视频大小情况，主要修改一下几项：
+
+max_execution_time = 0 (最久执行时间为 30 秒.就是说超过30秒,该脚本就停止执行.此处设置为0，表示没有时间限制)
+post_max_size = **M (设定 POST 数据所允许的最大值，默认为2M,修改为合适值)
+upload_max_filesize = **M (所上传的文件的最大值，默认为8M,修改为合适值)
+
+说明：最好设置`post_max_size`等于 `upload_max_filesize`.upload_max_filesize与post_max_size之间的关系:在论坛发表贴子时,您post_max_size 设为10M,而upload_max_filesize设成了2M,那么您只能上传最大为2M的附件,且可以同时上传5个
+
+7、浏览器访问 www.e-learning.com；
+
+8、后台链接 ：www.e-learning.com/admin/login/index.html  登录账号 ：admin  登录密码 ：mrsoft
+
+
+

@@ -1,0 +1,14 @@
+<div class="catalog">
+    <div class="nav_title"><img src="/static/index/images/user-center.png"> 会员中心</div>
+    <!--导航目录开始-->
+        <div class="nav_catalog">
+            <!--一级目录开始-->
+            <ul>                    
+               <li><a href="{:url('User/account')}" {eq name="nav" value="account"}class="on"{/eq}>账号管理<div class="right"></div></a></li>
+               <li><a href="{:url('User/download')}" {eq name="nav" value="download"}class="on"{/eq}>我的下载<div class="right"></div></a></li>
+               <li><a href="{:url('User/view_record')}" {eq name="nav" value="viewRecord"}class="on"{/eq}>观看记录<div class="right"></div></a></li>
+            </ul>
+            <!--一级目录结束-->
+        </div>
+    <!--导航目录结束-->
+</div>

@@ -1,0 +1,352 @@
+{include file="/public/_meta,/public/_header,/public/_menu"}
+<link href="/static/admin/lib/webuploader/0.1.5/webuploader.css" rel="stylesheet" />
+
+<div class="page-container">
+	<form class="form form-horizontal" id="form-resource">
+        <div class="row cl">
+			<label class="form-label col-xs-4 col-sm-2"><span class="c-red"> * </span>所属课程：</label>
+			<div class="formControls col-xs-8 col-sm-9">
+				<span class="select-box">
+				<select name="course_id" id="course_id" class="select">
+                    <option value="">请选择</option>
+                    {foreach name="courses" item="item"}
+					<option value="{$item.id}" {if condition="isset($info) && ($info.course_id eq $item.id)"}selected{/if}>{$item.name}</option>
+                    {/foreach}				
+				</select>
+				</span>
+			</div>
+		</div>
+		<div class="row cl">
+			<label class="form-label col-xs-4 col-sm-2"><span class="c-red"> * </span>资源名称：</label>
+			<div class="formControls col-xs-8 col-sm-9">
+				<input type="text" class="input-text" id="title" name="title" value="{$info.title|default=''}" placeholder="资源名称" autocomplete="off">
+			</div>
+		</div>
+		
+		<div class="row cl">
+			<label class="form-label col-xs-4 col-sm-2"><span class="c-red"> * </span>上传视频：</label>
+			<div class="formControls col-xs-8 col-sm-9">
+				<div class="uploader-thum-container">
+					<div id="fileList" class="uploader-list">
+                    {notempty name="info.video_path"}
+                       <div id="WU_FILE_0" class="item"> 
+				         <div class="pic-box">已上传 ：{$info.video_path}</div>
+				       </div>
+                    {/notempty}
+                    </div>
+					<div id="filePicker">选择视频</div>
+                    <input type="hidden" id="video" name="video_path" value="{$info.video_path|default=''}"><span class="c-red" style=" font-size:12px; padding-left:5px;">(仅限 mp4 格式文件)</span>
+					<!--<button id="btn-star" class="btn btn-default btn-uploadstar radius ml-10">开始上传</button>-->
+				</div>
+			</div>
+		</div>
+        
+        <div class="row cl">
+			<label class="form-label col-xs-4 col-sm-2">文档内容：</label>
+			<div class="formControls col-xs-8 col-sm-9"> 
+				<script id="editor" type="text/plain" name="document" style="width:100%;height:360px;">{$info.document|default=''|htmlspecialchars_decode}</script> 
+			</div>
+		</div>
+        
+        <div class="row cl">
+			<label class="form-label col-xs-4 col-sm-2">上传源码：</label>
+			<div class="formControls col-xs-8 col-sm-9">
+				<div class="uploader-thum-container">
+					<div id="fileList2" class="uploader-list">
+                    {notempty name="info.code_path"}
+                       <div id="WU_FILE_2" class="item"> 
+				         <div class="pic-box">已上传 ：{$info.code_path} <a href="javascript:" onclick="del_code()"><span class="label label-success radius" style="font-size:12px; background:#ff0000;">删除</span></a></div>
+				       </div>
+                    {/notempty}
+                    </div>
+					<div id="filePicker2">选择源码</div>
+                    <input type="hidden" id="code" name="code_path" value="{$info.code_path|default=''}"><span class="c-red" style=" font-size:12px; padding-left:5px;">(仅限 zip 格式文件)</span>
+					<!--<button id="btn-star" class="btn btn-default btn-uploadstar radius ml-10">开始上传</button>-->
+				</div>
+			</div>
+		</div>
+        
+        <div class="row cl">
+			<label class="form-label col-xs-4 col-sm-2"><span class="c-red"> * </span>排序值：</label>
+			<div class="formControls col-xs-8 col-sm-9">
+				<input type="text" class="input-text" id="sort" name="sort" value="{$info.sort|default=10}" placeholder="排序值" >
+			</div>
+		</div>
+        
+        <div class="row cl">
+			<label class="form-label col-xs-4 col-sm-2"><span class="c-red"> * </span>发布状态：</label>
+			<div class="formControls col-xs-8 col-sm-9">
+				<span class="select-box">
+				<select name="status" class="select">
+                    <option value="1" {if condition="isset($info) && $info.status eq 1"}selected{/if}>正常</option>
+					<option value="0" {if condition="isset($info) && $info.status eq 0"}selected{/if}>关闭</option>					
+				</select>
+				</span>
+			</div>
+		</div>
+		
+		<div class="row cl">
+			<div class="col-xs-8 col-sm-9 col-xs-offset-4 col-sm-offset-2">
+                <input type="hidden" name="id" value="{$info.id|default=0}">
+				<a href="javascript:" onClick="return check()" id="submit"><button class="btn btn-primary radius" type="button"><i class="Hui-iconfont">&#xe632;</i> 保存 </button></a>
+			</div>
+		</div>
+	</form>
+</div>
+</div>
+
+{include file="/public/_footer"}
+
+<script type="text/javascript" src="/static/admin/lib/webuploader/0.1.5/webuploader.min.js"></script>
+<script type="text/javascript" src="/static/admin/lib/ueditor/1.4.3/ueditor.config.js"></script>
+<script type="text/javascript" src="/static/admin/lib/ueditor/1.4.3/ueditor.all.min.js"></script>
+<script type="text/javascript" src="/static/admin/lib/ueditor/1.4.3/lang/zh-cn/zh-cn.js"></script>
+<script type="text/javascript">
+$(function(){	
+	$list = $("#fileList"),
+	state = "pending",
+	uploader;
+
+	var uploader = WebUploader.create({
+		auto: true,
+		swf: '/static/admin/lib/webuploader/0.1.5/Uploader.swf',
+	
+		// 文件接收服务端。
+		server: '/static/admin/lib/webuploader/0.1.5/server/fileupload.php?type=video',
+	
+		// 选择文件的按钮。可选。
+		// 内部根据当前运行是创建，可能是input元素，也可能是flash.
+		pick: '#filePicker',
+	
+		// 不压缩image, 默认如果是jpeg，文件上传前会压缩一把再上传！
+		resize: false,
+		// 只允许选择图片文件。
+		accept: {
+			title: 'Video',
+			extensions: 'mp4',
+			mimeTypes: 'video/*'
+		}
+	});
+	uploader.on( 'fileQueued', function( file ) {
+	    if($('#WU_FILE_0')) $('#fileList').empty();
+		var $li = $(
+			'<div id="' + file.id + '" class="item">' +
+				'<div class="pic-box"><img></div>'+
+				'<div class="info">' + file.name + '</div>' +
+				'<p class="state">等待上传...</p>'+
+			'</div>'
+		),
+		$img = $li.find('img');
+		$list.append( $li );
+	
+	});
+	
+	uploader.on("error", function (type) {
+		if (type == "Q_TYPE_DENIED") {
+			layer.msg("请上传MP4、AVI格式文件");
+		} else if (type == "Q_EXCEED_SIZE_LIMIT") {
+			layer.msg("文件大小不能超过2M");
+		}else {
+		    layer.alert("上传出错！请检查后重新上传！错误代码:"+type);
+		}
+	});
+	
+	// 文件上传过程中创建进度条实时显示。
+	uploader.on( 'uploadProgress', function( file, percentage ) {
+		var $li = $( '#'+file.id ),
+			$percent = $li.find('.progress-box .sr-only');
+	
+		// 避免重复创建
+		if ( !$percent.length ) {
+			$percent = $('<div class="progress-box"><span class="progress-bar radius"><span class="sr-only" style="width:0%"></span></span></div>').appendTo( $li ).find('.sr-only');
+		}
+		$li.find(".state").text("上传中");
+		$percent.css( 'width', percentage * 100 + '%' );
+	});
+	
+	// 文件上传成功，给item添加成功class, 用样式标记上传成功。
+	uploader.on( 'uploadSuccess', function( file , data) {
+		$( '#'+file.id ).addClass('upload-state-success').find(".state").text("已上传");
+		$( '#video' ).val( data._raw );
+	});
+	
+	// 文件上传失败，显示上传出错。
+	uploader.on( 'uploadError', function( file ) {
+		$( '#'+file.id ).addClass('upload-state-error').find(".state").text("上传出错");
+	});
+	
+	// 完成上传完了，成功或者失败，先删除进度条。
+	uploader.on( 'uploadComplete', function( file ) {  
+		$( '#'+file.id ).find('.progress-box').fadeOut();
+	});
+	uploader.on('all', function (type) {
+        if (type === 'startUpload') {
+            state = 'uploading';
+        } else if (type === 'stopUpload') {
+            state = 'paused';
+        } else if (type === 'uploadFinished') {
+            state = 'done';
+        }
+       
+    });
+	
+	
+	/****  上传源码  ****/
+	$list2 = $("#fileList2"),
+	uploader2;
+
+	var uploader2 = WebUploader.create({
+		auto: true,
+		swf: '/static/admin/lib/webuploader/0.1.5/Uploader.swf',
+	
+		// 文件接收服务端。
+		server: '/static/admin/lib/webuploader/0.1.5/server/fileupload.php?type=code',
+	
+		// 选择文件的按钮。可选。
+		// 内部根据当前运行是创建，可能是input元素，也可能是flash.
+		pick: '#filePicker2',
+	
+		// 不压缩image, 默认如果是jpeg，文件上传前会压缩一把再上传！
+		resize: false,
+		// 只允许选择图片文件。
+		accept: {
+			title: 'Code',
+			extensions: 'zip',
+			mimeTypes: 'application/zip'
+		}
+	});
+	uploader2.on( 'fileQueued', function( file ) {
+	    if($('#WU_FILE_2')) $('#fileList2').empty();
+		var $li = $(
+			'<div id="' + file.id + '" class="item">' +
+				'<div class="pic-box"><img></div>'+
+				'<div class="info">' + file.name + '</div>' +
+				'<p class="state">等待上传...</p>'+
+			'</div>'
+		),
+		$img = $li.find('img');
+		$list2.append( $li );
+	
+	});
+	
+	uploader2.on("error", function (type) {
+		if (type == "Q_TYPE_DENIED") {
+			layer.msg("请上传zip、rar、7z格式文件");
+		} else if (type == "Q_EXCEED_SIZE_LIMIT") {
+			layer.msg("文件大小不能超过2M");
+		}else {
+		    layer.alert("上传出错！请检查后重新上传！错误代码:"+type);
+		}
+	});
+	
+	// 文件上传过程中创建进度条实时显示。
+	uploader2.on( 'uploadProgress', function( file, percentage ) {
+		var $li = $( '#'+file.id ),
+			$percent = $li.find('.progress-box .sr-only');
+	
+		// 避免重复创建
+		if ( !$percent.length ) {
+			$percent = $('<div class="progress-box"><span class="progress-bar radius"><span class="sr-only" style="width:0%"></span></span></div>').appendTo( $li ).find('.sr-only');
+		}
+		$li.find(".state").text("上传中");
+		$percent.css( 'width', percentage * 100 + '%' );
+	});
+	
+	// 文件上传成功，给item添加成功class, 用样式标记上传成功。
+	uploader2.on( 'uploadSuccess', function( file , data) {
+		$( '#'+file.id ).addClass('upload-state-success').find(".state").text("已上传");
+		$( '#code' ).val( data._raw );
+	});
+	
+	// 文件上传失败，显示上传出错。
+	uploader2.on( 'uploadError', function( file ) {
+		$( '#'+file.id ).addClass('upload-state-error').find(".state").text("上传出错");
+	});
+	
+	// 完成上传完了，成功或者失败，先删除进度条。
+	uploader2.on( 'uploadComplete', function( file ) {  
+		$( '#'+file.id ).find('.progress-box').fadeOut();
+	});
+	uploader2.on('all', function (type) {
+        if (type === 'startUpload') {
+            state = 'uploading';
+        } else if (type === 'stopUpload') {
+            state = 'paused';
+        } else if (type === 'uploadFinished') {
+            state = 'done';
+        }
+       
+    });
+	
+		
+	/*编辑器*/
+	var ue = UE.getEditor('editor');
+	
+	/*左侧菜单*/
+	var nav = "{$nav}";
+	$('#menu-'+nav+' dt').addClass('selected');
+	$('#menu-'+nav+' dd').css("display","block");
+	$('#menu-'+nav+' li').addClass('current');
+});
+
+//表单验证
+function check(){
+			  
+	  var course_id = $.trim($('#course_id').val()); 
+	  if( course_id=='' ){
+		 layer.msg('请选择所属课程');
+		 $('#course_id').focus(); 
+		 return false;
+	  }
+	  var title = $.trim($('#title').val()); 
+	  if( title=='' ){
+		 layer.msg('请输入资源名称');
+		 $('#title').focus(); 
+		 return false;
+	  }	   
+	  if( $("#video").val() == '' ){
+		 layer.msg('请上传视频'); 
+		 return false;
+	  }	  
+	  var sorts = $.trim($("#sort").val());
+	  if(sorts == ''){
+		 layer.msg('请输入排序值');
+		 $("#sort").focus();
+		 return false;
+	  }	  
+	  var reg = /^[1-9]\d*$/;  //判断正整数
+	  if(!reg.test(sorts)) {
+		 layer.msg("请输入正整数！");
+		 $("#sort").focus();
+		 return false;
+	  }	  
+	  $.ajax({
+		 type : "POST",
+		 url  : "{:url('save_resource')}",
+		 data : $('#form-resource').serialize(),
+		 beforeSend: function() {
+			//$("#submit").removeAttr("onClick");
+			layer.msg('保存中...',{time:10000});
+		 },
+		 success : function(res){
+			if(res.status){
+				layer.msg(res.msg,{time:1000},function(){
+					window.location.href = "{:url('index')}";
+				});
+			}else{
+				layer.msg(res.msg);
+				$("#submit").attr("onClick","check()");
+			}
+		 }
+	  });
+}
+//删除源码
+function del_code(){
+   if($('#WU_FILE_2')){
+      $('#fileList2').empty();
+   }
+   $('#code').val('');
+}
+</script>
+</body>
+</html>

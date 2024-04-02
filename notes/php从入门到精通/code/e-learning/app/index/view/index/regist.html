@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="keywords" content="明日科技,thinkphp5.0" />
+<meta name="description" content="明日科技,thinkphp5.0" />
+<title>注册页面</title>
+<link rel="shortcut icon" href="favicon.ico">
+<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE9">
+<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+<link rel="stylesheet" type="text/css" href="/static/index/css/base.css?" />
+<script type="text/javascript" src="/static/index/js/jquery-2.1.1.min.js"></script>
+<script type="text/javascript" src="/static/index/js/layer/layer.js"></script>
+<script type="text/javascript" src="/static/index/js/regist.js"></script>
+</head>
+<body>
+	<div class="tabPanel_login">
+		<ul>
+            <li class=""><a href="{:url('Index/login')}">登录</a> </li>
+			<li class="hit_login"><a href="{:url('Index/regist')}">注册</a></li>
+		</ul>
+		<!--注册开始-->
+        <div class="finput-register">
+                <div class="finput-box-login">
+                    <form id="reg_form" name="reg_form" action="{:url('Index/saveMember')}" method="post" class="form">
+                        <input type="password" name="dispassword" autocomplete="off" style="display:none;" disabled/>
+                        <div class="f-inputlist m-t40" >
+                            <div class="input-box m-b20" style="position:relative;">
+                                <span class="input-name">用户名<h></h>：</span>
+                                <input class="input-name-input required" type="text" id="username" name="username" placeholder="登录用户名" onKeyDown="if(event.keyCode==13){return false;}" autocomplete="off"/>   
+                            </div>
+                            <div class="input-box m-b20">
+                                <span class="input-name cf required">密<h></h>码<h></h>：</span>
+                                <input class="input-name-password" type="password" maxlength="32" name="password" id="password" placeholder="登录密码" autocomplete="off"  onpaste="return false;" onKeyDown="if(event.keyCode==13){return false;}"/>                               
+                            </div>																		
+                            <div class="input-box finput-box-register" id="code_container">
+                                <span class="input-name">验证码<h></h>：</span>
+                                <input class="finput-box-code safe-number cf" type="text" name="code" id="code" placeholder="输入右侧验证码" autocomplete="off"/>
+                                <div class="login-indentifying-code" style="width:auto;">
+                                    <img src="{:captcha_src()}" id="imgcode" onClick="this.src='{:captcha_src()}?'+Math.random();" style="float:left; height:39px; width:95px;">
+                                </div>
+                            </div>
+                            <button class="greenbtn" type="button" onFocus="this.blur()" id="submit" onClick="check()">立即注册</button>
+                        </div>
+                    </form>
+                </div>			
+        </div>
+        <!--注册结束-->
+	</div>
+</body>
+</html>

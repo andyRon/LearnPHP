@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="keywords" content="明日科技,thinkphp5.0" />
+<meta name="description" content="明日科技,thinkphp5.0" />
+<title>登录页面</title>
+<link rel="shortcut icon" href="favicon.ico">
+<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE9">
+<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+<link rel="stylesheet" type="text/css" href="/static/index/css/base.css?" />
+<link rel="stylesheet" type="text/css" href="/static/index/css/tcode/Qaptcha.jquery.css" />
+<link rel="stylesheet" type="text/css" href="/static/index/css/tcode/loading.css" />
+<script type="text/javascript" src="/static/index/js/jquery-2.1.1.min.js"></script>
+<script type="text/javascript" src="/static/index/js/layer/layer.js"></script>
+<script type="text/javascript" src="/static/index/js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="/static/index/js/jquery.ui.touch.js"></script>
+<script type="text/javascript" src="/static/index/js/Qaptcha.jquery.js"></script>
+<script type="text/javascript" src="/static/index/js/login.js"></script>
+<script type="text/javascript">
+  var qurl="{:url('Index/checkSlider')}";
+  var setQapTchaurl = "{:url('Index/setQapTcha')}";  
+  $(function(){ $('#QapTcha').QapTcha({}); })
+</script>
+</head>
+<body>
+	<div class="tabPanel_login">
+		<ul>
+			<li class="hit_login"><a href="{:url('Index/login')}">登录</a> </li>
+			<li class=""><a href="{:url('Index/regist')}">注册</a></li>
+		</ul>
+		<!--登录开始-->
+            <div class="finput-login" >
+                    <div class="finput-box">
+                        <form id="login_form" name="login_form" action="{:url('Index/chkLogin')}" method="post" class="form" autocomplete="off">
+                            <input type="password" name="dispassword" autocomplete="off" style="display:none;" disabled/>
+                            <div class="f-inputlist m-t40">
+                                <div class="input-box m-b20" >
+                                    <span class="input-name">用户名<h></h>：</span>
+                                    <input class="required input-name-input" type="text" id="username" name="username" autocomplete="off" placeholder="请输入用户名" autocomplete="off"/>
+                                </div>
+                                <div class="input-box m-b20">
+                                    <span class="input-name cf">密<h></h>码<h></h>：</span>
+                                    <input class="input-name-password required" autocomplete="off"  type="password" maxlength="30" name="password" id="password" placeholder="请输入密码" onpaste="return false;"/>
+                                </div>
+                                <div class="input-box" style="height:50px; overflow:hidden; position:relative; margin-top:10px;" id="code_container">   
+                                    <span class="input-name cf">滑动验证：</span>
+                                    <div id="QapTcha" class="QapTcha" style="margin-top:0px;"></div> 
+                                </div>  
+                                <input type="button" value="立即登录" class="greenbtn" onFocus="this.blur()" style="border:0px;" onClick="check()">
+                            </div>
+                        </form> 
+                    </div>
+               </div>				
+        <!--登录结束-->
+     </div>
+</body>
+</html>

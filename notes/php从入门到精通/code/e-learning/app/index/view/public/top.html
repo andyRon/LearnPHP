@@ -1,0 +1,69 @@
+<script type="text/javascript" src="/static/index/js/jquery-2.1.1.min.js"></script>
+<script type="text/javascript" src="/static/index/js/layer/layer.js"></script>
+<script type="text/javascript">
+    $(function(){
+	    $('.vip-member').hover(function(){
+		   $('.viparr').addClass('on');
+		   $('.navsub-item').show();
+	    },function(){
+		   $('.viparr').removeClass('on');
+		   $('.navsub-item').hide();
+	    }); 
+	});
+    function login(n){
+	   if(n==1){
+	      var url = "{:url('Index/regist')}";
+	   }else{
+	      var url = "{:url('Index/login')}";
+	   }
+	   layer.open({
+			type:2,
+			title:'登录/注册 ',
+			shadeClose:true,
+			closeBtn:1,
+			shade: 0.5,
+			border: [0],
+			area:['600px','398px'],
+			scrollbar:false,
+			content:url,
+			success:function(layero,index){
+				layer.iframeAuto(index);
+			}
+	   });	
+	}
+</script>
+<style>
+	.login { float:right; width: 240px; color: #aaaaaa; line-height: 69px;}
+	.login a { color: #aaaaaa;}
+	.login a:hover { text-decoration: underline;}
+</style>
+<div class="top-nav {if condition="$controller neq 'Index' && $action neq 'index'"}fix{/if}" style="position:absolute;">
+
+    <div class="pageNav" style="min-height:70px;">
+        <div class="top-nav-ma ma clearfix">
+            <a href="{:url('Index/index')}" class="clubLogo"><img src="/static/index/images/logo.png"></a>
+            <ul class="top-navList clearfix">
+                <li class="index {if condition="$controller eq 'Index' && $action eq 'index'"}on{/if}"><a href="{:url('Index/index')}">首页</a></li>
+                <li class="vip-member navsub vip">
+                    <a href="javascript:;">会员中心<i class="viparr"></i></a>
+                    <div class="navsub-item"> 
+                    {if condition="session('user_id')"}
+                       <a href="{:url('User/account')}" class="login-pop">账号管理</a>                                  
+                       <a href="{:url('User/download')}" class="login-pop">我的下载</a>
+                       <a href="{:url('User/view_record')}" class="login-pop">观看记录</a>
+                    {else/}
+                       <a href="javascript:" onClick="login(0)" class="login-pop">账号管理</a>                                  
+                       <a href="javascript:" onClick="login(0)" class="login-pop">我的下载</a>
+                       <a href="javascript:" onClick="login(0)" class="login-pop">学习记录</a>
+                    {/if}                     
+                    </div>						
+                </li>
+            </ul>
+            {if condition="session('user_id')"}
+               <div class="login"> {:session("username")} | <a href="{:url('Index/logout')}">退出</a> </div>
+            {else/}
+               <div class="login"><a href="javascript:" onClick="login(0)"> 登录 </a> | <a href="javascript:" onClick="login(1)"> 注册 </a></div>
+            {/if}                                               
+        </div>
+    </div>
+</div>

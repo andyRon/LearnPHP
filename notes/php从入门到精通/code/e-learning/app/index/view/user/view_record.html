@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">	
+<meta name="keywords" content="明日科技,thinkphp5.0,编程e学网" />
+<meta name="description" content="明日科技,thinkphp5.0,编程e学网" />
+<title>编程e学网</title>
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="stylesheet" type="text/css" href="/static/index/css/public.css" />
+<link rel="stylesheet" type="text/css" href="/static/index/css/index.css" />
+<link rel="stylesheet" href="/static/admin/css/admin.css"  />
+</head>
+<body>
+   {include file="public/top"/}
+    <div class="admin_body">
+        {include file="public/left"/}
+    	<div class="list">
+               <div class="box_tab" >
+                <div class="list_title">观看记录</div>
+                <div class="select_all" >
+                    {notempty name="datas"}
+                    <input type="checkbox" id="allc1" onFocus="this.blur()"/><label for="allc1">全选</label><a href="javascript:" id="delete">删除</a>
+                    </div>
+                    {/notempty}
+                </div>
+              
+                <div class="box_all">
+                    <div class="my_download">
+                        <ul>
+                          {notempty name="datas"}
+                            {foreach name="datas" item="item"}
+                                <li>
+                                    <div class="checkbox"><input type="checkbox" name="ids[]" class="ids" id="r_{$item.id}" style="cursor:pointer;" value="{$item.id}"/></div>
+                                    <div class="type">【{$item.course_id|getCourseName}】</div>
+                                    <div class="title"><a href="{:url('Index/view',['id'=>$item['resource_id']])}">{$item.resource_id|getResourceTitle}</a></div>
+                                    <div class="time">{$item.addtime}</div>
+                                    <div class="delete"><a href="javascript:" onClick="del_record({$item.id})"><img src="/static/index/images/p_delete.png"/></a></div>
+                                </li>
+                             {/foreach}
+                           {else/}
+                              <center>暂无下载</center>
+                           {/notempty}
+                        </ul>
+                        <!--分页开始-->
+                        <div class="admin_page">{$datas->render()}</div>
+                        <!--分页结束-->
+                    </div>
+                </div>
+        </div>
+    </div>
+   {include file="public/foot"/}
+<script type="text/javascript">
+ $(function(){
+	 //全选的实现
+	 $("#allc1").click(function(){
+		$(".ids").prop("checked", this.checked);
+	 });
+	 $(".ids").click(function(){
+		var option = $(".ids");
+		option.each(function(i){
+			if(!this.checked){
+				$("#allc1").prop("checked", false);
+				return false;
+			}else{
+				$("#allc1").prop("checked", true);
+			}
+		});
+	 });
+	 //全选删除
+	 $('#delete').click(function(){
+		var ids = $('.ids:checked');
+		if(ids.length == 0){
+			layer.msg('请选择要删除的选项',{time:1000});
+			return false;
+		}
+		url = "{:url('User/del_records')}";
+		layer.confirm('确定删除选中的选项吗？',{title:'提示',icon:3},function(){
+			var query = ids.serialize();
+			$.ajax({
+				type: "POST",
+				url : url,
+				data: query,
+				success: function(data){
+					if(data.status){
+					   layer.msg(data.msg,{time:1000},function(){ 
+						  location.href = location.href;
+					   });
+					}else{
+					   layer.msg(data.msg);
+					}
+				}
+			});
+		});
+		return false;
+	 });
+  
+});
+
+function del_record(id){
+   layer.confirm('确定要删除么？',{title:'提示',icon:3},function(){
+       var url = "{:url('User/del_record')}";
+	   $.post(url,{"id":id},function(data){
+		   if(data.status){
+			  layer.msg(data.msg, {time: 1000}, function() {
+				 window.location.href = window.location.href;
+			  })
+		   }else{
+			  layer.msg(data.msg);
+		   }
+	   });   
+   })   
+}
+</script>
+</body>
+</html>

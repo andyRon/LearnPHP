@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="renderer" content="webkit">
+    <title>后台管理系统 - 登录</title>
+    <link rel="stylesheet" href="/static/admin/css/bootstrap.min.css" >
+    <link rel="stylesheet" href="/static/admin/css/font-awesome/css/font-awesome.css" >
+    <link rel="stylesheet" href="/static/admin/css/animate.css">
+    <link rel="stylesheet" href="/static/admin/css/admin-style.css">
+    <script src="/static/admin/js/jquery-2.1.1.min.js"></script>
+    <script src="/static/admin/js/bootstrap.min.js"></script>
+    <script src="/static/admin/js/layer/layer.js"></script>
+    <style>
+        .login{
+            text-align: left;
+        }
+        .login span,input,img{
+            padding:0px 8px 0px 8px;
+        }
+        .login input{
+            width: 106px;
+            padding: 6px 8px;
+        }
+    </style>
+</head>
+
+<body class="gray-bg">
+
+<div class="middle-box text-center loginscreen animated fadeInDown">
+    <div>
+        <div>
+          <h1 class="logo-name">MR</h1>
+        </div>
+        <h3>欢迎使用 后台管理系统</h3>
+        
+        <form id="myform" action="{:url('check')}" method="post" onSubmit="return chk_login(this)">
+           
+            <input type="password" name="dispassword" autocomplete="off" style="display:none;"/>
+            <input type="text" name="disusername" autocomplete="off" style="display:none;">
+            <div class="form-group">
+                <input name="username" type="text" class="form-control" placeholder="用户名" autocomplete="off" required/>
+            </div>
+            <div class="form-group">
+                <input name="password" type="password" class="form-control" placeholder="密码" autocomplete="off" required/>
+            </div>
+            
+            <div class="form-group login">
+                <span>验证码</span>
+                <input name="code" size=6 type="text" id="code" autocomplete="off" required/>
+                <img src="{:captcha_src()}" onClick="this.src='{:captcha_src()}?'+Math.random();" id="imgcode" width="128" height="36" style="cursor:pointer;" alt="captcha"/>
+            </div>
+            <button type="submit" class="btn btn-primary full-width">登 录</button>
+        </form>
+    </div>
+</div>
+
+<script language="javascript">
+
+    function chk_login(form){ 
+        if($.trim(form.username.value)==''){
+            layer.msg('用户名不能为空！');
+            return false;
+        }
+        if($.trim(form.password.value)==''){
+            layer.msg('密码不能为空！');
+            return false;
+        }
+        if($.trim(form.code.value) == "") {
+            layer.msg('请输入验证码！');
+            form.code.focus();
+            return false;
+        }
+        return true;
+    }
+	
+	$(function(){
+	     $('#myform').submit(function(){        
+			var url = $('#myform').attr('action');
+			$.ajax({
+				type:"POST",
+				url :url,
+				data:$('#myform').serialize(),
+				success: function(res){
+					if(res.status){
+						layer.msg('登录成功',{time:1000},function(){
+							window.location.href = res.msg;
+						});
+					}else{
+						$('#imgcode').attr('src','{:captcha_src()}'+'?'+Math.random());
+						layer.msg(res.msg);
+					}
+				}
+			});
+			return false;
+		});	
+	});
+		
+</script>
+</body>
+</html>

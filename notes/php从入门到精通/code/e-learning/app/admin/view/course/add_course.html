@@ -1,0 +1,207 @@
+{include file="/public/_meta,/public/_header,/public/_menu"}
+<link href="/static/admin/lib/webuploader/0.1.5/webuploader.css" rel="stylesheet" />
+
+<div class="page-container">
+	<form class="form form-horizontal" id="form-course">
+		<div class="row cl">
+			<label class="form-label col-xs-4 col-sm-2"><span class="c-red"> * </span>课程名称：</label>
+			<div class="formControls col-xs-8 col-sm-9">
+				<input type="text" class="input-text" id="name" name="name" value="{$info.name|default=''}" placeholder="课程名称" autocomplete="off">
+			</div>
+		</div>
+		
+		<div class="row cl">
+			<label class="form-label col-xs-4 col-sm-2"><span class="c-red"> * </span>课程封面：</label>
+			<div class="formControls col-xs-8 col-sm-9">
+				<div class="uploader-thum-container">
+					<div id="fileList" class="uploader-list">
+                    {notempty name="info.image_path"}
+                       <div id="WU_FILE_0" class="item"> 
+				         <div class="pic-box"><img src="/static/uploads/image/{$info.image_path}" width="100" height="100"></div>
+				       </div>
+                    {/notempty}
+                    </div>
+					<div id="filePicker">选择图片</div><span class="c-red" style=" font-size:12px; padding-left:5px;">(仅限 jpg, png, gif, bmp 格式文件)</span>
+                    <input type="hidden" id="filename" name="image_path" value="{$info.image_path|default=''}">
+					<!--<button id="btn-star" class="btn btn-default btn-uploadstar radius ml-10">开始上传</button>-->
+				</div>
+			</div>
+		</div>
+        
+        <div class="row cl">
+			<label class="form-label col-xs-4 col-sm-2"><span class="c-red"> * </span>排序值：</label>
+			<div class="formControls col-xs-8 col-sm-9">
+				<input type="text" class="input-text" id="sort" name="sort" value="{$info.sort|default=10}" placeholder="排序值" >
+			</div>
+		</div>
+        
+        <div class="row cl">
+			<label class="form-label col-xs-4 col-sm-2"><span class="c-red"> * </span>发布状态：</label>
+			<div class="formControls col-xs-8 col-sm-9">
+				<span class="select-box">
+				<select name="status" class="select">
+                    <option value="1" {if condition="isset($info) && $info.status eq 1"}selected{/if}>正常</option>
+					<option value="0" {if condition="isset($info) && $info.status eq 0"}selected{/if}>关闭</option>					
+				</select>
+				</span>
+			</div>
+		</div>
+		
+		<div class="row cl">
+			<div class="col-xs-8 col-sm-9 col-xs-offset-4 col-sm-offset-2">
+                <input type="hidden" name="id" value="{$info.id|default=0}">
+				<a href="javascript:" onClick="return check()" id="submit"><button class="btn btn-primary radius" type="button"><i class="Hui-iconfont">&#xe632;</i> 保存 </button></a>
+			</div>
+		</div>
+	</form>
+</div>
+</div>
+
+{include file="/public/_footer"}
+
+<script type="text/javascript" src="/static/admin/lib/webuploader/0.1.5/webuploader.min.js"></script>
+<script type="text/javascript">
+$(function(){	
+	$list = $("#fileList"),
+	$btn = $("#btn-star"),
+	state = "pending",
+	uploader;
+
+	var uploader = WebUploader.create({
+		auto: true,  // 选完文件后，是否自动上传
+		swf: '/static/admin/lib/webuploader/0.1.5/Uploader.swf',
+	
+		// 文件接收服务端。
+		server: '/static/admin/lib/webuploader/0.1.5/server/fileupload.php?type=image',
+	
+		// 选择文件的按钮。可选。
+		// 内部根据当前运行是创建，可能是input元素，也可能是flash.
+		pick: '#filePicker',
+	
+		// 不压缩image, 默认如果是jpeg，文件上传前会压缩一把再上传！
+		resize: false,
+		// 只允许选择图片文件。
+		accept: {
+			title: 'Images',
+			extensions: 'gif,jpg,jpeg,bmp,png',
+			mimeTypes: 'image/*'
+		}
+	});
+	uploader.on( 'fileQueued', function( file ) {
+	    if($('#WU_FILE_0')) $('#fileList').empty();
+		var $li = $(
+			'<div id="' + file.id + '" class="item">' +
+				'<div class="pic-box"><img></div>'+
+				'<div class="info">' + file.name + '</div>' +
+				'<p class="state">等待上传...</p>'+
+			'</div>'
+		),
+		$img = $li.find('img');
+		$list.append( $li );
+	
+		// 创建缩略图，如果为非图片文件，可以不用调用此方法。
+		// thumbnailWidth x thumbnailHeight 为 100 x 100
+		uploader.makeThumb( file, function( error, src ) {
+			if ( error ) {
+				$img.replaceWith('<span>不能预览</span>');
+				return;
+			}
+			$img.attr( 'src', src );
+		}, thumbnailWidth=100, thumbnailHeight=100 );
+	});
+	
+	uploader.on("error", function (type) {
+		if (type == "Q_TYPE_DENIED") {
+			layer.msg("请上传JPG、PNG、GIF、BMP格式文件");
+		} else if (type == "Q_EXCEED_SIZE_LIMIT") {
+			layer.msg("文件大小不能超过2M");
+		}else {
+		    layer.alert("上传出错！请检查后重新上传！错误代码:"+type);
+		}
+	});
+	
+	// 文件上传过程中创建进度条实时显示。
+	uploader.on( 'uploadProgress', function( file, percentage ) {
+		var $li = $( '#'+file.id ),
+			$percent = $li.find('.progress-box .sr-only');
+	
+		// 避免重复创建
+		if ( !$percent.length ) {
+			$percent = $('<div class="progress-box"><span class="progress-bar radius"><span class="sr-only" style="width:0%"></span></span></div>').appendTo( $li ).find('.sr-only');
+		}
+		$li.find(".state").text("上传中");
+		$percent.css( 'width', percentage * 100 + '%' );
+	});
+	
+	// 文件上传成功，给item添加成功class, 用样式标记上传成功。
+	uploader.on( 'uploadSuccess', function( file , data) {
+		console.log(data);
+		$( '#'+file.id ).addClass('upload-state-success').find(".state").text("已上传");
+		$( '#filename' ).val( data._raw );
+	});
+	
+	// 文件上传失败，显示上传出错。
+	uploader.on( 'uploadError', function( file ) { console.log(file);
+		$( '#'+file.id ).addClass('upload-state-error').find(".state").text("上传出错");
+	});
+	
+	// 完成上传完了，成功或者失败，先删除进度条。
+	uploader.on( 'uploadComplete', function( file ) {  
+		$( '#'+file.id ).find('.progress-box').fadeOut();
+	});
+	
+	/*左侧菜单*/
+	var nav = "{$nav}";
+	$('#menu-'+nav+' dt').addClass('selected');
+	$('#menu-'+nav+' dd').css("display","block");
+	$('#menu-'+nav+' li').addClass('current');
+});
+
+//表单验证
+function check(){
+			  
+	  var name = $.trim($('#name').val()); 
+	  if( name=='' ){
+		 layer.msg('请输入课程名称');
+		 $('#name').focus(); 
+		 return false;
+	  }	   
+	  if( $("#filename").val() == '' ){
+		 layer.msg('请上传课程封面'); 
+		 return false;
+	  }	  
+	  var sorts = $.trim($("#sort").val());
+	  if(sorts == ''){
+		 layer.msg('请输入排序值');
+		 $("#sort").focus();
+		 return false;
+	  }	  
+	  var reg = /^[1-9]\d*$/;  //判断正整数
+	  if(!reg.test(sorts)) {
+		 layer.msg("请输入正整数！");
+		 $("#sort").focus();
+		 return false;
+	  }	  
+	  $.ajax({
+		 type : "POST",
+		 url  : "{:url('save_course')}",
+		 data : $('#form-course').serialize(),
+		 //beforeSend: function() {
+			//$("#submit").removeAttr("onClick");
+			//layer.msg('保存中...',{time:10000});
+		 //},
+		 success : function(res){
+			if(res.status){
+				layer.msg(res.msg,{time:1000},function(){
+					window.location.href = "{:url('index')}";
+				});
+			}else{
+				layer.msg(res.msg);
+				$("#submit").attr("onClick","check()");
+			}
+		 }
+	  });
+ }
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">	
+<meta name="keywords" content="明日科技,thinkphp5.0,编程e学网" />
+<meta name="description" content="明日科技,thinkphp5.0,编程e学网" />
+<title>编程e学网</title>
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="stylesheet" type="text/css" href="/static/index/css/public.css" />
+<link rel="stylesheet" type="text/css" href="/static/index/css/index.css" />
+</head>
+<body>  
+    <div id="preloader">
+        <div id="preloader-inner"></div>
+    </div>  
+    {include file="public/top"/}
+	<div class="lightball">
+        <div class="clubTit">
+        	<img src="/static/index/images/banner.png">
+        	<a href="javascript:" class="signIn">立即学习</a>
+        </div>
+        <div class="banner_btn"><img src="/static/index/images/btn2.png"></div>
+        <div class="light-bottom"></div>
+    </div>
+    <!--中间课程部分-->
+    <div class="content">
+    	<div class="plat">
+			<div class="zero">
+				<div class="zero_title">
+					<p class="bigsize"><span class="color_red">精彩课程</span></p>
+					<p class="small_size margin_t"><span class="margin_r">共 {$datas|count} 课</span> <span class="margin_r"> {$resourceTotal} 小节</span> {notempty name="datas"}学习时长 {$resourceTotal/5|ceil} 周{/notempty}</p>
+				</div>
+				<div class="zero_list">
+                  {notempty name="datas"}
+                   {foreach name="datas" item="item"}
+					<div class="list_infor">         
+                        <a href="{:url('lists',['id'=>$item.id])}"><img src="/static/uploads/image/{$item.image_path}" onerror="this.src='/static/uploads/images/no_image.jpg'"></a>
+						<a href="{:url('lists',['id'=>$item.id])}"><p class="small_size font_weight margin_l" title="{$item.name}">{$item.name}</p></a>    
+						<div class="infor_list">
+							<p class="icon_1">{$item.id|getResourceTotal}小节</p>
+							<p class="icon_2">{$item.id|getCourseLearnerTotal}人观看</p>
+						</div>
+					</div>               				
+				   {/foreach}
+                  {else/}
+                    <center>暂无课程</center>
+                  {/notempty}
+				</div>
+			</div>
+		</div>
+	</div>   
+    {include file="public/foot"/}
+    <script type="text/javascript" src="/static/index/js/idangerous.swiper.min.js"></script>
+    <script type="text/javascript" src="/static/index/js/jquery.preloader.min.js"></script>
+    <script type="text/javascript" src="/static/index/js/three.js"></script>
+    <script type="text/javascript" src="/static/index/js/Projector.js"></script>
+    <script type="text/javascript" src="/static/index/js/CanvasRenderer.js?v1"></script>
+    <script type="text/javascript" src="/static/index/js/light.min.js?v2"></script>
+    <script type="text/javascript">
+       $(window).scroll(function(event){
+          if($(window).scrollTop() >= 920){
+		     $(".top-nav").removeAttr("style").addClass('fix');
+		  }else{
+		     $(".top-nav").css('position','absolute').removeClass('fix');
+		  }
+       });
+	   $(window).preloader({
+		   delay: 0.1
+	   });
+	   $(function(){
+		  $('.signIn').click(function(){
+		     //$(window).scrollTop(920);
+			 $('html,body').animate({scrollTop: '920px'}, 600);
+		  });
+	   });
+    </script>
+</body>
+</html>

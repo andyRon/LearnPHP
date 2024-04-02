@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="keywords" content="明日科技,thinkphp5.0,编程e学网" />
+<meta name="description" content="明日科技,thinkphp5.0,编程e学网" />
+<title>编程e学网</title>
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="stylesheet" type="text/css" href="/static/index/css/public.css" />
+<link rel="stylesheet" type="text/css" href="/static/index/css/index.css" />
+<link rel="stylesheet" type="text/css" href="/static/index/css/language.css" />
+<link rel="stylesheet" type="text/css" href="/static/index/css/video.css">
+<script type="text/javascript" src="/static/index/js/video.js"></script>
+</head>
+<body>
+
+{include file="public/top"/}
+<div class="plat" style="margin-top:70px;">
+   <div class="video_box video_add">
+      <div class="catalog">
+        <div class="catalog_title">课程目录</div>
+         <div class="video_scroll">
+           <div class="list_title"> <span>{$courseName}</span>  </div>
+           <div class="level_one on">
+              <ul>
+                {notempty name="catalogs"}
+                   {foreach name="catalogs" item="item"}
+                     {if condition="checkRoot($item['id'])"}
+                       <li> <a href="{:url('Index/view',['id'=>$item.id])}" title="{$item.title}" {eq name="item.id" value="$info.id"}class="on"{/eq}> {eq name="item.id" value="$info.id"}<span class="add"></span>{/eq} {$item.title}</a> </li>
+                     {else/}
+                       <li> <a href="javascript:" onClick="login(0)" title="{$item.title}" {eq name="item.id" value="$info.id"}class="on"{/eq}> {eq name="item.id" value="$info.id"}<span class="add"></span>{/eq} {$item.title}</a> </li>
+                     {/if}
+                   {/foreach}
+                {else/}
+                   <center>暂无内容</center>
+                {/notempty}
+              </ul>
+           </div>        
+      </div>
+    </div>
+    
+    <div class="main">
+       <div class="main_title">
+          <div class="main_img"></div>
+          <div class="main_box"><span>第{$index}节</span><i>&gt;&gt;</i>{$info.title}</div>
+       </div>
+       
+      <div class="main_video">
+       {eq name="type" value="1"}
+         <div class="wz_con">         
+           <!--视频开始-->
+           <div class="change_video">            
+             <video id="my-video" class="video-js vjs-big-play-centered" controls preload="auto" width="900" height="504" data-setup="{}">
+                <source src="/static/uploads/video/{$info['video_path']}" type="video/mp4">
+             </video>
+           </div>          
+          </div>
+       {else/}
+          <!--文档开始-->
+          <div class="change_txt" id="txt">{:htmlspecialchars_decode($content)}</div>
+          <script>
+              $(function(){
+			     $('#txt img').attr('title','');
+			  });
+          </script>
+       {/eq} 
+      </div>
+      
+      <!--开始-->
+      <div class="new_link">
+        <div class="link"> 
+            {if condition="($type eq 1) && !empty($info['document'])"}<a href="{:url('Index/view',['id'=>$info['id'],'type'=>2])}">相关文档</a>{/if} 
+        	{if condition="$type eq 2"}<a href="{:url('Index/view',['id'=>$info['id']])}">相关视频</a>{/if} 
+        	{notempty name="info.code_path"}<a href="{:url('Index/downloadCode',['id'=>$info['id']])}">源码下载</a>{/notempty}
+        </div>
+        <div class="New_right"> 
+           {notempty name="uid"}
+             {if condition="checkRoot($uid)"}
+               <a href="{:url('Index/view',['id'=>$uid,'type'=>$type])}">上一节 </a>
+             {else/}
+               <a href="javascript:" onClick="login(0)"> 上一节 </a>
+             {/if}
+           {/notempty}
+           {notempty name="did"}
+             {if condition="checkRoot($uid)"}
+               <a href="{:url('Index/view',['id'=>$did,'type'=>$type])}"> 下一节 </a>
+             {else/}
+               <a href="javascript:" onClick="login(0)"> 下一节 </a>
+             {/if}             
+           {/notempty}
+        </div>
+      </div>
+      <!--结束--> 
+    </div>
+  </div>
+</div>
+
+{include file="public/foot"/}
+</body>
+</html>

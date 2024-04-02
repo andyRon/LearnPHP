@@ -1,0 +1,19 @@
+/* CSS Document */
+.new {
+	position: relative;
+	height: 18px;
+	width: 55px;
+	top: 1px;
+	left: 115px;
+	color: #ffffff;
+	cursor: hand;
+}
+.hot {
+	position: relative;
+	height: 18px;
+	width: 55px;
+	top: 9px;
+	right: 23px;
+	color: #ffffff;
+	cursor: hand;
+}

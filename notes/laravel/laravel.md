@@ -18,6 +18,33 @@ https://learnku.com/docs/laravel/10.x
 
 ### 贡献导引
 
+#### Laravel相关应用
+
+[Laravel Application](https://github.com/laravel/laravel)
+
+- [Laravel Art](https://github.com/laravel/art)
+- [Laravel Documentation](https://github.com/laravel/docs)
+- [Laravel Dusk](https://github.com/laravel/dusk)
+- [Laravel Cashier Stripe](https://github.com/laravel/cashier)
+- [Laravel Cashier Paddle](https://github.com/laravel/cashier-paddle)
+- [Laravel Echo](https://github.com/laravel/echo)
+- [Laravel Envoy](https://github.com/laravel/envoy)
+- [Laravel Framework](https://github.com/laravel/framework)
+- [Laravel Homestead](https://github.com/laravel/homestead)
+- [Laravel Homestead Build Scripts](https://github.com/laravel/settler)
+- [Laravel Horizon](https://github.com/laravel/horizon)
+- [Laravel Jetstream](https://github.com/laravel/jetstream)
+- [Laravel Passport](https://github.com/laravel/passport)
+- [Laravel Pennant](https://github.com/laravel/pennant)
+- [Laravel Pint](https://github.com/laravel/pint)
+- [Laravel Sail](https://github.com/laravel/sail)
+- [Laravel Sanctum](https://github.com/laravel/sanctum)
+- [Laravel Scout](https://github.com/laravel/scout)
+- [Laravel Socialite](https://github.com/laravel/socialite)
+
+- [Laravel Telescope](https://github.com/laravel/telescope)
+- [Laravel Website](https://github.com/laravel/laravel.com-next)
+
 
 
 #### 代码风格
@@ -26,7 +53,18 @@ https://learnku.com/docs/laravel/10.x
 
 ## 2 入门
 
-### 安装
+### 2.1 安装
+
+```sh
+composer create-project laravel/laravel example-app
+
+composer global require laravel/installer
+laravel new example-app
+```
+
+
+
+
 
 
 
@@ -36,21 +74,75 @@ php artisan serve
 
 
 
-### 配置信息
+#### Laravel 全栈框架
+
+Laravel 可以作为一个全栈框架。全栈框架意味着你将使用 Laravel 将请求路由到你的应用程序，并通过 Blade 模板 或像 Inertia 这样的单页应用混合技术来渲染你的前端。这是使用 Laravel 框架最常见的方式，在我们看来，这也是使用 Laravel 最高效的方式。
+
+
+
+如果你使用 Laravel 作为全栈框架，我们也强烈建议你学习如何使用 [Vite](https://learnku.com/docs/laravel/10.x/vite) 编译应用程序的 CSS 和 JavaScript 。
+
+
+
+#### Laravel API 后端
+
+Laravel 也可以作为 JavaScript 单页应用程序或移动应用程序的 API 后端。
+
+ [路由](https://learnku.com/docs/laravel/10.x/routing)，[Laravel Sanctum](https://learnku.com/docs/laravel/10.x/sanctum) 和 [Eloquent ORM](https://learnku.com/docs/laravel/10.x/eloquent) 
+
+### 2.2 配置信息
+
+
+
+```
+php artisan about
+
+php artisan about --only=environment
+
+php artisan config:show database
+```
+
+
 
 
 
 #### 环境配置
 
+ [DotEnv](https://github.com/vlucas/phpdotenv) 
+
+
+
+`.env` 文件不应该提交到版本管理器中
+
+
+
+`App::environment()`
+
+
+
+##### 环境文件加密
+
+```sh
+php artisan env:encrypt [--key=3UVsEgGVK36XN82KKeyLFMhvosbZN1aF]
+
+php artisan env:encrypt --env=staging
+
+php artisan env:decrypt [--key=3UVsEgGVK36XN82KKeyLFMhvosbZN1aF] [--cipher=AES-128-CBC]
+```
+
+
+
 
 
 #### 访问配置值
 
+`config()`
 
 
 
+#### 配置缓存
 
-#### 访问配置值
+`php artisan config:cache`
 
 
 
@@ -62,9 +154,15 @@ php artisan serve
 
 #### 维护模式
 
+```sh
+php artisan down [--refresh=15] [--retry=60]
+```
+
+##### 绕过维护模式
 
 
-### 目录结构
+
+### 2.3 目录结构
 
 
 
@@ -72,15 +170,21 @@ php artisan serve
 
 
 
-### 前端
+
+
+### 2.4 前端
+
+在使用 Laravel 构建应用时，有两种主要的方式来解决前端开发问题，选择哪种方式取决于你是否想通过 PHP 或使用像 Vue 和 React 这样的 JavaScript 框架来构建前端。
+
+#### 使用 PHP
+
+Blade
 
 
 
-#### Blade
+[Laravel Livewire](https://laravel-livewire.com/) 是一个用于构建 Laravel 前端的框架，具有与使用现代 JavaScript 框架（如 Vue 和 React ）构建的前端一样的动态、现代和生动的感觉。
 
 
-
-#### Livewire
 
 
 
@@ -90,7 +194,9 @@ php artisan serve
 
 
 
-##### Inertia
+[Inertia](https://inertiajs.com/) 可以桥接你的 Laravel 应用程序和现代 Vue 或 React 前端，使你可以使用 Vue 或 React 构建完整的现代前端，同时利用 Laravel 路由和控制器进行路由、数据注入和身份验证 - 所有这些都在单个代码存储库中完成。使用这种方法，你可以同时享受 Laravel 和 Vue / React 的全部功能，而不会破坏任何一种工具的能力。
+
+
 
 
 
@@ -124,25 +230,82 @@ php artisan serve
 
 
 
-### 起步套件
+### 2.5 起步套件
 
 #### Laravel Breeze
 
-Laravel Breeze 是 Laravel 的 认证功能 的一种简单、最小实现，包括登录、注册、密码重置、电子邮件验证和密码确认。此外，Breeze 还包括一个简单的「个人资料」页面，用户可以在该页面上更新其姓名、电子邮件地址和密码。
+[Laravel Breeze](https://github.com/laravel/breeze) 是 Laravel 的 认证功能 的一种简单、最小实现，包括登录、注册、密码重置、电子邮件验证和密码确认。此外，Breeze 还包括一个简单的「个人资料」页面，用户可以在该页面上更新其姓名、电子邮件地址和密码。
+
+```sh
+composer require laravel/breeze --dev
+```
 
 
 
-### 部署
 
-**如果你需要管理服务器，请考虑使用官方的 Laravel 服务器管理和部署服务，如 [Laravel Forge](https://forge.laravel.com/)。**
+
+
+
+### 2.6 部署
+
+如果你需要管理服务器，请考虑使用官方的 Laravel 服务器管理和部署服务，如 [Laravel Forge](https://forge.laravel.com/)。
+
+#### nginx
+
+
+
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    server_name example.com;
+    root /srv/example.com/public;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.php;
+
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    error_page 404 /index.php;
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}
+```
+
+Web 服务器将所有请求指向应用程序的 public/index.php 文件。永远不要尝试将 index.php 文件移动到项目的根目录，因为从项目根目录为应用提供服务会将许多敏感配置文件暴露到公网。
+
+
+
+#### 使用 Forge / Vapor 部署
+
+
 
 [Laravel Vapor](https://vapor.laravel.com) 是一个由 AWS 提供支持的基于无服务器概念的 Laravel 部署平台。在 Vapor 上启动你的 Laravel 基础架构，并爱上无服务器的可扩展简单性。Laravel Vapor 由 Laravel 的创作者进行了精细调校，以便与框架无缝协作，因此你可以像以前一样继续编写 Laravel 应用程序。
 
 
 
+
+
 ## 3 核心架构
 
-### 请求周期 🔖
+### 请求周期 
 
 
 

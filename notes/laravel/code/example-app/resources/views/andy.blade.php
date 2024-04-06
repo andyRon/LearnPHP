@@ -1,15 +1,17 @@
-<h1>andy come to laravel</h1>
-
-
 <?php
 
-print_r(token_get_all('xx'));
-$name = 'wo';
-function  a()
-{
-    global $name ;
-    print_r($name);
-}
+//print_r(token_get_all('xx'));
 
-a();
+$Users = array('tom', 'jack', 'lucy');
+?>
+
+
+<h1>andy come to laravel</h1>
+
+<div>
+    @foreach($Users as $user)
+        Hello, {{ $user }} <br>
+    @endforeach
+</div>
+
 

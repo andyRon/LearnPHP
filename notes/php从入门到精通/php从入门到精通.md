@@ -1066,6 +1066,13 @@ PDO是PHP data object（PHP数据对象）的简称，目前支持的数据库�
 
 
 
+PDO的特点：
+
+- PDO通过数据库访问抽象层，其作用是统一各数据库的访问接口。与MySQL和MS SQL Server函数库相比，PDO让跨数据库的使用更具有亲和力；与ADODB和MDB2相比，PDO更高效。
+- PDO将通过一种轻型、清晰、方便的函数，统一各种不同RDBMS库的共有特性，最大限度地实现PHP脚本的抽象性和兼容性。
+- PDO吸取现有数据库扩展成功和失败的经验教训，可以轻松地与各种数据库进行交互。
+- PDO扩展是模块化的，能够在运行时为数据库后端加载驱动程序，而不必重新编译或重新安装整个PHP程序。例如，PDO_MySQL扩展会替代PDO扩展实现MySQL数据库API。还有一些用于Oracle、PostgreSQL、ODBC和Firebird的驱动程序，更多的驱动程序尚在开发。
+
 ### 19.2 PDO连接数据库
 
 
@@ -1251,6 +1258,8 @@ echo '<br>';
 print_r($xml_3);
 ```
 
+第一行中的header()函数设置了HTML编码。虽然在XML文档中设置了编码格式，但只是针对XML文档的，在HTML输出时也要设置编码格式。
+
 #### 遍历所有子元素
 
 `children()`
@@ -1386,13 +1395,200 @@ echo $dom->save('index.xml')?'保存成功':'保存失败';
 
 ## 23 PHP与Ajax技术
 
+### Ajax概述
+
+Ajax是Asynchronous JavaScript And XML的缩写，由Jesse James Garrett创造，含义是异步JavaScript和XML技术。Ajax是JavaScript、XML、CSS、DOM等多种已有技术的组合，可以实现客户端的异步请求操作，在不需要刷新页面的情况下与服务器进行通信，从而减少用户的等待时间。
+
+
+
+### Ajax使用的技术
+
 Ajax是XMLHttpRequest对象和JavaScript、XML语言、DOM、CSS等多种技术的组合。
+
+
+
+### XMLHttpRequest对象
+
+XMLHttpRequest是Ajax最核心的技术，它是一个具有应用程序接口的JavaScript对象，能够使用超文本传输协议(HTTP)连接一个服务器，是微软公司为了满足开发者的需要，于1999年在IE 5.0浏览器中率先推出的。现在许多浏览器都对其提供了支持。使用XMLHttpRequest对象，Ajax可以像桌面应用程序一样只同服务器进行数据层面的交换，而不用每次都刷新页面，也不用每次都将数据处理的工作交给服务器来做，这样既减轻了服务器负担又加快了响应速度、缩短了用户等待的时间。
+
+
+
+### Ajax开发需要注意的几个问题
+
+#### 1 XMLHttpRequest对象封装问题
+
+Ajax技术的实现主要依赖于XMLHttpRequest对象，但在调用其进行异步数据传输时，因为XMLHttpRequest对象的实例在处理事件完成后就会被销毁，所以如果不对该对象进行封装处理，在下次需要调用它时就要重新构建，而且每次调用都需要编写一大段代码，使用起来很不方便。现在很多开源的Ajax框架都提供了对XMLHttpRequest对象的封装方案。
+
+#### 2 性能问题
+
+3种优化Ajax应用执行速度的方法。
+
+- 优化for循环。
+- 将DOM结点附加到文档上。
+- 尽量减少点操作符“.”的使用。
+
+#### 3 中文编码问题
+
+Ajax不支持多种字符集，它默认的字符集是utf-8，所以在应用Ajax技术的程序中应及时进行编码转换，否则程序中出现的中文字符将变成乱码。一般情况下，以下两种情况将产生中文乱码。
+
+PHP发送中文，Ajax接收。只需在PHP顶部添加如下语句，XMLHttpRequest就会正确解析其中的中文。
+
+```php
+header('Content-type: text/html; charset=utf-8');              //指定发送数据的编码格式
+```
+
+Ajax发送中文，PHP接收。这个比较复杂，需要在Ajax中先用encodeURIComponent对提交的中文进行编码，然后在PHP页面添加如下代码：
+
+```
+$GB2312string=iconv('UTF-8', 'gb2312//IGNORE', $RequestAjaxString);
+```
+
+PHP选择MySQL数据库时，使用如下语句设置数据库的编码类型：
+
+```
+mysqli_query($conn, "set names gb2312");
+```
+
+
+
+
 
 
 
 ### PHP中Ajax技术的典型应用
 
 #### 检测用户名是否已被占用
+
+```php
+<?php
+    header('Content-type: text/html;charset=utf-8');        //指定发送数据的编码格式为GB2312
+    $link=mysqli_connect("localhost","root","111");
+    mysqli_select_db($link,"db_database23");
+    mysqli_query($link,"set names utf8");
+    $username=$_GET['username'];
+    $sql=mysqli_query($link,"select * from tb_user where name='".$username."'");
+    $info=mysqli_fetch_array($sql);
+    if ($info){
+        echo "很报歉！用户名[".$username."]已经被注册！";
+    }else{
+        echo "祝贺您！用户名[".$username."]没有被注册！";
+    }
+?>
+
+```
+
+```php
+<html>
+<head>
+<title>在PHP中应用AJAX技术检测用户名</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+</style>
+</head>
+<body>
+<script type="text/javascript">
+var http_request = false;
+function createRequest(url) {
+    //初始化对象并发出XMLHttpRequest请求
+    http_request = false;
+    http_request = new XMLHttpRequest();
+    if (!http_request) {
+        alert("不能创建XMLHTTP实例!");
+        return false;
+    }
+    http_request.onreadystatechange = alertContents;                     //指定响应方法
+    
+    http_request.open("GET", url, true);                                 //发出HTTP请求
+    http_request.send(null);
+}
+function alertContents() {                                               //处理服务器返回的信息
+    if (http_request.readyState == 4) {
+        if (http_request.status == 200) {
+            alert(http_request.responseText);
+        } else {
+            alert('您请求的页面发现错误');
+        }
+    }
+}
+</script>
+<script type="text/javascript">
+function checkName() {
+    var username = form1.username.value;
+    if(username=="") {
+        window.alert("请填写用户名!");
+        form1.username.focus();
+        return false;
+    }
+    else {
+        createRequest('checkname.php?username='+username+'&nocache='+new Date().getTime());
+    }
+}
+</script>
+<form name="form1" method="post" action="">
+  <table width="1003" height="628" border="0" align="center" cellpadding="0" cellspacing="0">
+    <tr>
+      <td valign="top" background="images/bg.JPG"><table width="1003" border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td width="242" height="346">&nbsp;</td>
+            <td width="532" height="30" align="center" valign="bottom" class="style5"><span class="style2">用户注册<span class="style3"> <span class="style4"></span></span></span></td>
+            <td width="229">&nbsp;</td>
+          </tr>
+          <tr>
+            <td>&nbsp;</td>
+            <td align="center"><table width="92%"  border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="29%" height="30" align="center">用 户 名：</td>
+                  <td width="71%" height="24"><input name="username" type="text" id="username" size="20">
+                      <a href="#" onClick="checkName();">[检测用户名]</a> </td>
+                </tr>
+                <tr>
+                  <td height="24" align="center">真实姓名：</td>
+                  <td height="24"><input name="truename" type="text" id="truename" size="20">
+                  *</td>
+                </tr>
+                <tr>
+                  <td height="24" align="center">密&nbsp;&nbsp;&nbsp;&nbsp;码：</td>
+                  <td height="24"><input name="pwd1" type="password" id="pwd1" size="20">
+                  *</td>
+                </tr>
+                <tr>
+                  <td height="24" align="center">确认密码：</td>
+                  <td height="24"><input name="pwd2" type="password" id="pwd2" size="20">
+                  * </td>
+                </tr>
+                <tr>
+                  <td height="24" align="center">性&nbsp;&nbsp;&nbsp;&nbsp;别：</td>
+                  <td height="24"><input name="sex" type="radio" value="男" checked>
+                  男
+                    <input type="radio" name="sex" value="女">
+                  女</td>
+                </tr>
+                <tr>
+                  <td height="24" align="center" style="padding-left:10px">Email：</td>
+                  <td height="24" class="word_grey"><input name="email" type="text" id="email" size="28">
+                  *</td>
+                </tr>
+                <tr>
+                  <td height="24" align="center">个人主页：</td>
+                  <td height="24" class="word_grey"><input name="homepage" type="text" id="homepage" size="28"></td>
+                </tr>
+                <tr>
+                  <td height="40" colspan="2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input name="imageField" type="image" src="images/submit.gif" width="64" height="20" border="0">
+&nbsp;
+                  <input name="imageField2" type="image" src="images/reset.gif" width="64" height="20" border="0"></td>
+                </tr>
+            </table></td>
+            <td>&nbsp;</td>
+          </tr>
+      </table></td>
+    </tr>
+  </table>
+</form>
+</body>
+</html>
+
+```
 
 
 
@@ -1446,6 +1642,20 @@ MixPHP——单线程协程PHP微服务框架
 
 
 http://pecl.php.net/package/swoole
+
+
+
+### Thinkphp+Swoole应用
+
+传统的FPM框架，在每次请求时都要重新加载大量文件，而且每次加载的文件几乎都是相同的，因此影响了效率，降低了接口的响应速度。
+
+使用Swoole可以解决此问题。Swoole可以将加载的文件放到内存中，后面无须重复加载，做到了只加载一次，以后直接读取内存即可。Swoole使PHP开发人员可以编写高性能高并发的TCP、UDP、Unix Socket、HTTP、WebSocket等服务。随着Swoole的应用越来越广泛，ThinkPHP也推出了最新的扩展think-swoole。
+
+
+
+
+
+
 
 # 四、项目实战
 

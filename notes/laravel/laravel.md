@@ -2,9 +2,11 @@
 
 
 
+
+
+# Laravel 文档
+
 https://learnku.com/docs/laravel/10.x
-
-
 
 ## 1 前言
 
@@ -351,13 +353,13 @@ Facades 有很多好处。它们提供了简洁、易记的语法，让你可以
 
 ## 4 基础功能
 
-### 路由
+### 4.1 路由
 
 
 
 
 
-### 中间体
+### 4.2 中间体
 
 中间件提供了一种方便的机制来检查和过滤进入应用程序的 HTTP 请求。
 
@@ -378,7 +380,7 @@ Facades 有很多好处。它们提供了简洁、易记的语法，让你可以
 
 
 
-### CSRF保护
+### 4.3 CSRF保护
 
 跨站点请求伪造是一种恶意利用，利用这种手段，代表经过身份验证的用户执行未经授权的命令。
 
@@ -386,39 +388,173 @@ Laravel 可以轻松保护您的应用程序免受[跨站点请求伪造](https:
 
 
 
-### 控制器
+```php
+// CSRF 保护 测试
+Route::get('task/{id}/delete', function ($id) {
+    return '<form method="post" action="' . route('task.delete', [$id]) . '">
+                <input type="hidden" name="_method" value="DELETE">
+                <button type="submit">删除任务</button>
+            </form>';
+});
+Route::delete('task/{id}', function ($id) {
+    return 'Delete Task ' . $id;
+})->name('task.delete');
+```
+
+报错，419
+
+为了安全考虑，Laravel 期望所有路由都是「只读」操作的（对应请求方式是 GET、HEAD、OPTIONS），如果路由执行的是「写入」操作（对应请求方式是 POST、PUT、PATCH、DELETE），则需要传入一个隐藏的 Token 字段（`_token`）以避免[跨站请求伪造攻击]（CSRF）。在我们上面的示例中，请求方式是 DELETE，但是并没有传递 `_token` 字段，所以会出现异常。
+
+避免跨站请求伪造攻击的措施就是对写入操作采用非 GET 方式请求，同时在请求数据中添加校验 Token 字段，Laravel 也是这么做的，这个 Token 值会在渲染表单页面时通过 Session 生成，然后传入页面，在每次提交表单时带上这个 Token 值即可实现安全写入，因为第三方站点是不可能拿到这个 Token 值的，所以由第三方站点提交的请求会被拒绝，从而避免 CSRF 攻击。
+
+在 Laravel 中，和表单方法伪造一样，支持通过 HTML 表单隐藏字段传递这个值：
+
+```php
+Route::get('task/{id}/delete', function ($id) {
+    return '<form method="post" action="' . route('task.delete', [$id]) . '">
+                <input type="hidden" name="_method" value="DELETE"> 
+                <input type="hidden" name="_token" value="' . csrf_token() . '">
+                <button type="submit">删除任务</button>
+            </form>';
+});
+```
+
+> **Request Payload（载荷）**
+>
+> ![](images/image-20240414125014596.png)
+>
+> ![](images/image-20240414125113927.png)
+
+
+
+### 4.4 控制器
+
+将所有业务逻辑一股脑放到控制器听起来挺不错，但是控制器更适合承担的角色其实是负责对 HTTP 请求进行路由，因为还有很多其他访问应用的方式，比如 Artisan 命令、队列、调度任务等等，控制器并非唯一入口，所以不适合也不应该将所有业务逻辑封装于此，过度依赖控制器会对以后应用的扩展带来麻烦。所以，你应该具备这样的意识：控制器的主要职责就是获取 HTTP 请求，进行一些简单处理（如验证）后将其传递给真正处理业务逻辑的职能部门，如 Service。
+
+> 注：当然，如果是非常简单的应用，比如只是简单的数据库增删改查或数据渲染，放到控制器里面也无妨，但是如果后续需要调用控制器方法才能完成某个功能，那么是时候将这个控制器方法里的业务逻辑拆分到 Service 里面了。
+
+
+
+#### 依赖注入
+
+正如前面介绍的 `Input` 门面一样，Laravel 中的门面为 Laravel 代码库中的大部分类提供了简单的接口调用，通过门面你可以轻松从当前获取各种请求数据，比如用户输入、Session、Cookie 等，但不是所有的类都有对应的门面（当前的映射关系可以查看[门面列表](https://laravelacademy.org/post/9536.html#toc-6)），对于这些类提供的方法我们可以通过更底层的依赖注入来调用，本质上来看，门面仅仅是一种设计模式，是对底层复杂 API 的上层静态代理，主要目的在于简化代码调用，所以可以用门面调用的方法肯定可以用依赖注入来实现，而可以通过依赖注入实现的功能不一定可以通过门面来调用，除非你自定义实现这个门面。
+
+提到依赖注入，就绕不开[服务容器](https://laravelacademy.org/post/9534.html)，关于服务容器后面我们会单独讲解，而现在你只需了解服务容器是一个绑定多个接口与具体服务实现类的容器，而依赖注入则是在代码编写时以接口（或者叫做类型提示）方式作为参数，不必传入具体实现类，在代码运行时会根据配置从服务容器获取接口对应的实现类执行具体的接口方法，从而极大提高了代码的可维护性和可扩展性。
+
+在 Laravel 中所有的控制器方法（包括构造函数）都会在服务容器中进行解析，这意味着所有方法中传入的可以被容器解析的接口/类型提示对应服务实现都会被自动注入，我们将这个过程称之为依赖注入。我们上面演示的通过 `$request` 对象获取用户请求数据就是采用依赖注入的方式。
+
+在日常开发中，推荐大家使用依赖注入而非门面来获取用户输入数据，除此之外，还可以通过 `$request` 对象获取 Session、Cookie 数据。
+
+
+
+#### 资源控制器
+
+有时候在编写控制器时命名方法名称可能是最困难的，好在 Laravel 为常见的 REST/CRUD 控制器（在 Laravel 中称之为「资源控制器」）提供了一套约定规则，并为此提供了相应的 Artisan 生成器和路由定义方法，从方便我们一次为所有控制器方法定义路由。
+
+使用这个 Artisan 生成器来生成一个资源控制器:
+
+```sh
+php artisan make:controller PostController --resource
+```
+
+
+
+##### 资源控制器方法列表
+
+生成的 `PostController` 控制器的每个方法都有对应的请求方式、路由命名、URL、方法名和业务逻辑约定。
+
+| HTTP请求方式 | URL            | 控制器方法 | 路由命名    | 业务逻辑描述                 |
+| ------------ | -------------- | ---------- | ----------- | ---------------------------- |
+| GET          | post           | index()    | post.index  | 展示所有文章                 |
+| GET          | post/create    | create()   | post.create | 发布文章表单页面             |
+| POST         | post           | store()    | post.store  | 获取表单提交数据并保存新文章 |
+| GET          | post/{post}    | show()     | post.show   | 展示单个文章                 |
+| GET          | post/{id}/edit | edit()     | post.edit   | 编辑文章表单页面             |
+| PUT          | post/{id}      | update()   | post.update | 获取编辑表单输入并更新文章   |
+| DELETE       | post/{id}      | destroy()  | post.desc   | 删除单个文章                 |
+
+##### 绑定资源服务器
+
+`Route::resource` 方法用于一次注册包含上面列出的所有路由，并且遵循上述所有约定：
+
+```
+Route::resource('post', PostController::class);
+```
+
+
+
+### 4.4 请求
 
 
 
 
 
-### 请求
+### 4.5 响应
 
 
 
 
 
-### 响应
+### 4.6 视图
+
+在实际开发中，除了 API 路由返回指定格式数据对象外，大部分 Web 路由返回的都是视图，以便实现更加复杂的页面交互。
+
+在 Laravel 中，支持三种格式的视图文件解析：CSS 文件，原生 PHP 和 Blade模板（Blade引擎底层逻辑：`ViewServiceProvider`）。
+
+Laravel 在解析视图时是通过实时解析文件后缀名再调用相应的引擎进行处理的，视图文件位于 `resources/views` 目录下，对于多级子目录以「`.`」号分隔，并且引用时不带文件后缀名。
+
+
+
+#### 视图返回与参数传递
+
+
+
+在某个服务提供者如 `AppServiceProvider` 的 `boot` 方法中定义共享的视图变量：
+
+```php
+view()->share('siteName', 'Laravel学院');
+view()->share('siteUrl', 'https://xueyuanjun.com');
+```
+
+
+
+```php
+页面ID: {{ $id }}
+<hr>
+By <a href="{{ $siteUrl }}">{{ $siteName }}</a>
+```
+
+
+
+#### 在视图间共享变量
 
 
 
 
 
-### 试图
+### 4.7 Blade模版
+
+Blade 是 Laravel 提供的一个简单而又强大的模板引擎。 和其他流行的 PHP 模板引擎不同，Blade 并不限制你在视图中使用原生 PHP 代码。实际上，所有 Blade 视图文件都将被编译成原生的 PHP 代码并缓存起来，除非它被修改，否则不会重新编译，这就意味着 Blade 基本上不会给你的应用增加任何负担。Blade 模板文件使用 .`blade.php` 作为文件扩展名，被存放在 resources/views 目录。
+
+```php
+<h1>{{ $group->title }}</h1> 
+{!! $group->imageHtml() !!} 
+@forelse ($users as $user) 
+    {{ $user->username }} {{ $user->nickname }}<br> 
+@empty 
+    该组中没有任何用户 
+@endforelse
+```
+
+Blade 模板引擎有三种常见的语法：
+
+- 通过 `{{ }}` 渲染 PHP 变量（最常用）
+- 通过 `{!! !!}` 渲染原生 HTML 代码（用于富文本数据渲染）
+- 通过以 `@` 作为前缀的 Blade 指令执行一些控制结构和继承、引入之类的操作
 
 
 
-
-
-### Blade模版
-
-Blade 是 Laravel 提供的一个简单而又强大的模板引擎。 和其他流行的 PHP 模板引擎不同，Blade 并不限制你在视图中使用原生 PHP 代码。实际上，所有 Blade 视图文件都将被编译成原生的 PHP 代码并缓存起来，除非它被修改，否则不会重新编译，这就意味着 Blade 基本上不会给你的应用增加任何负担。Blade 模板文件使用 .blade.php 作为文件扩展名，被存放在 resources/views 目录。
-
-
-
-
-
-### Vite编译Assets
+### 4.8 Vite编译Assets
 
 Vite 是一款现代前端构建工具，提供极快的开发环境并将你的代码捆绑到生产准备的资源中。在使用 Laravel 构建应用程序时，通常会使用 Vite 将你的应用程序的 CSS 和 JavaScript 文件绑定到生产环境的资源中。
 
@@ -773,3 +909,48 @@ Laravel Cashier Stripe 为 Stripe 的订阅计费服务提供了一个富有表�
 
 
 ### Valet Mac 集成环境
+
+
+
+
+
+# Laravel 入门到精通教程
+
+https://laravelacademy.org/books/laravel-tutorial
+
+
+
+## 请求处理篇
+
+🔖 
+
+
+
+## 命令行交互篇
+
+
+
+
+
+## 数据库与 Eloquent 模型
+
+
+
+## 用户认证与授权
+
+
+
+
+
+## 请求响应底层剖析
+
+
+
+## 测试驱动开发
+
+
+
+```
+composer create-project laravel/laravel myblog --prefer-dist 10.*
+```
+

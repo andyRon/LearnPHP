@@ -16,6 +16,7 @@ class UserController extends Controller
 
         return view('user.index', [
             'user' => 123,
+            'name' => 'andy'
         ]);
     }
 
@@ -25,4 +26,22 @@ class UserController extends Controller
             'user' => 'ddxx'
         ]);
     }
+
+    public function test(Request $request): View
+    {
+        print_r($request->except('id'));
+        return view('user.test', [
+            'user' => 123,
+            'name' => 'andy',
+            'time' => time()
+        ]);
+    }
+
+    public function form(Request $request)
+    {
+        // 通过 $request 实例获取请求数据
+        dd($request->all());
+
+    }
+
 }

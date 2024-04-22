@@ -1156,7 +1156,7 @@ Yii 内置了一个[error handler](https://www.yiichina.com/doc/api/2.0/yii-web-
 
 
 
-## 日志🔖
+## 日志
 
 
 
@@ -1195,7 +1195,7 @@ Yii 内置了一个[error handler](https://www.yiichina.com/doc/api/2.0/yii-web-
 
 
 
-### 性能分析
+### 性能分析🔖
 
 
 
@@ -1215,7 +1215,13 @@ Yii 内置了一个[error handler](https://www.yiichina.com/doc/api/2.0/yii-web-
 
 ## 属性（Properties）
 
+通过 getter 和 setter 定义的属性也有一些特殊规则和限制：
 
+- 这类属性的名字是*不区分大小写*的。如，`$object->label` 和 `$object->Label` 是同一个属性。 因为 PHP 方法名是不区分大小写的。
+- 如果此类属性名和类成员变量相同，以后者为准。例如， 假设以上 `Foo` 类有个 `label` 成员变量，然后给 `$object->label = 'abc'` 赋值， 将赋给成员变量而不是 setter `setLabel()` 方法。
+- 这类属性不支持可见性（访问限制）。定义属性的 getter 和 setter 方法是 public、protected 还是 private 对属性的可见性没有任何影响。
+- 这类属性的 getter 和 setter 方法只能定义为*非静态*的，若定义为静态方法（static）则不会以相同方式处理。
+- 对不确定有无魔术方法（getter 或 setter）的属性正常调用 `property_exists()` 将不会生效。你应该分别调用 [canGetProperty()](https://www.yiichina.com/doc/api/2.0/yii-base-baseobject#canGetProperty()-detail) 或 [canSetProperty()](https://www.yiichina.com/doc/api/2.0/yii-base-baseobject#canSetProperty()-detail) 。  
 
 ## 事件（Events）🔖
 
@@ -1267,7 +1273,7 @@ Yii 内置了一个[error handler](https://www.yiichina.com/doc/api/2.0/yii-web-
 
 ## 行为（Behaviors）🔖
 
-行为是 [yii\base\Behavior](https://www.yiichina.com/doc/api/2.0/yii-base-behavior) 或其子类的实例。 行为，也称为 [mixins](http://en.wikipedia.org/wiki/Mixin)， 可以无须改变类继承关系即可增强一个已有的 [组件](https://www.yiichina.com/doc/api/2.0/yii-base-component) 类功能。 当行为附加到组件后，它将“注入”它的方法和属性到组件， 然后可以像访问组件内定义的方法和属性一样访问它们。 此外，行为通过组件能响应被触发的[事件](https://www.yiichina.com/doc/guide/2.0/basic-events)，从而自定义或调整组件正常执行的代码。
+行为是 [yii\base\Behavior](https://www.yiichina.com/doc/api/2.0/yii-base-behavior) 或其子类的实例。 行为，也称为 [mixins](http://en.wikipedia.org/wiki/Mixin)， 可以无须改变类继承关系即可增强一个已有的 [组件](https://www.yiichina.com/doc/api/2.0/yii-base-component) 类功能。 **当行为附加到组件后，它将“注入”它的方法和属性到组件**， 然后可以像访问组件内定义的方法和属性一样访问它们。 此外，行为通过组件能响应被触发的[事件](https://www.yiichina.com/doc/guide/2.0/basic-events)，从而自定义或调整组件正常执行的代码。
 
 ### 定义行为
 
@@ -1296,6 +1302,8 @@ Yii 内置了一个[error handler](https://www.yiichina.com/doc/api/2.0/yii-web-
 
 
 
+
+🔖🔖
 
 ## 配置（Configurations）
 

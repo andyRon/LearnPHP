@@ -73,5 +73,11 @@
             "type": "composer",
             "url": "https://asset-packagist.org"
         }
-    ]
+    ],
+    "autoload": {
+        "psr-4": {
+            "myapp\\components\\" : "myapp/components/",
+            "myapp\\event\\": "myapp/event/"
+        }
+    }
 }

@@ -37,7 +37,11 @@ $config = [
             'targets' => [
                 [
                     'class' => 'yii\log\FileTarget',
-                    'levels' => ['error', 'warning'],
+                    'levels' => ['error', 'warning', 'info'],
+                    'prefix' => function ($msg) {
+//                        return "[前缀]";
+                    },
+                    'logVars' => ['_SERVER'],   // 打印哪些全局变量
                 ],
             ],
         ],

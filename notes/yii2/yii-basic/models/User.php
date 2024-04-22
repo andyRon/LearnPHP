@@ -105,4 +105,5 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
     const SCENARIO_LOGIN = 'login';
     const SCENARIO_REGISTER = 'register';
 
+
 }

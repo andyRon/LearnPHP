@@ -5,10 +5,13 @@ namespace app\controllers;
 use app\models\ContactForm;
 use app\models\Country;
 use app\models\EntryForm;
+use app\models\Foo;
 use app\models\OmsOrder;
 use myapp\components\ActionTimeFilter;
+use yii\base\Event;
 use yii\data\Pagination;
 use yii\db\ActiveRecord;
+use yii\jui\DatePicker;
 use yii\web\Controller;
 use myapp\components\GreetingAction;
 use yii\web\View;
@@ -126,11 +129,40 @@ class CountryController extends Controller
 
     public function actionT5()
     {
-        $a = array('green', 'red', 'yellow', 'cat');
+        $a = array('green', 'red', 'yellow');
         $b = array('avocado', 'apple', 'banana');
         $c = array_combine($a, $b);
 
         print_r($c);
 
+        \Yii::info('xxxx');
+
+//        print_r(memory_get_usage());
+
     }
+
+    public function actionT6()
+    {
+        \Yii::beginProfile('myBenchmark');
+
+        for ($i = 1; $i < 10000; $i++) {
+            echo '1';
+        }
+        \Yii::endProfile('myBenchmark');
+    }
+
+    public function actionComponent()
+    {
+        $str = DatePicker::widget([
+            'language' => 'zh-CN',
+            'name'  => 'country',
+            'clientOptions' => [
+                'dateFormat' => 'yy-mm-dd',
+            ],
+        ]);
+        echo $str;
+
+    }
+
+
 }

@@ -29,7 +29,10 @@
   <tr>
     <td>&nbsp;</td>
     <td height="50">&nbsp;</td>
-    <td><input id="enter" name="enter" type="button" value="" onClick="check_login(login)">&nbsp;<input id="reset" name="reset" type="reset" value=""></td>
+    <td>
+      <input id="enter" name="enter" type="button" value="" onClick="check_login(login)">&nbsp;
+      <input id="reset" name="reset" type="reset" value="">
+    </td>
   </tr>
   <tr>
     <td>&nbsp;</td>

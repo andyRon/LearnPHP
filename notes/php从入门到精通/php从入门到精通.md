@@ -696,7 +696,7 @@ int file_put_contents(string filename, string data [, int flags]);
 
 在读写文件时，除file()、readfile()等少数几个函数外，其他操作必须要先使用fopen()函数打开文件，最后使用fclose()函数关闭文件。文件的信息函数（如filesize、filemtime等）则都不需要打开文件，只要文件存在即可。
 
-## 13.2 目录处理
+### 13.2 目录处理
 
 ```php
 resource opendir(string path);
@@ -1675,7 +1675,7 @@ e-business
 
 
 
-## 26 tpk开发e学网
+## 26 tp开发e学网
 
 e-learning
 

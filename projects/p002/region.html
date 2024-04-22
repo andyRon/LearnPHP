@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PHP+Jquery+Mysql实现省市县三级联动</title>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+</head>
+<body>
+    <h1 style="text-align: center">PHP+Jquery+Mysql实现省市县三级联动</h1>
+    <table align="center" border="1" cellpadding="3" cellspacing="0" width="30%">
+        <tr style="background-color: skyblue">
+            <th>省份</th>
+            <th>市</th>
+            <th>县</th>
+        </tr>
+        <tr style="height: 100px">
+            <th>
+                <select id="provinces">
+                    <option value="">请选择省份</option>
+                </select>
+            </th>
+            <th>
+                <select id="citys">
+                    <option value="">请选择市</option>
+                </select>
+            </th>
+            <th>
+                <select id="countrys">
+                    <option value="">请选择县</option>
+                </select>
+                <br>
+            </th>
+        </tr>
+    </table>
+
+    <h4>
+        <div align="center" id="region"></div></th>
+    </h4>
+
+
+    <script src="my.js"></script>
+</body>
+</html>

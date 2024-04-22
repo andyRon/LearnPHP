@@ -1,0 +1,23 @@
+{
+  "name": "andyron/blog",
+  "description": "A php blog demo app",
+  "type": "project",
+  "license": "Apache",
+  "authors": [
+    {
+      "name": "andyron",
+      "email": "rongming.2008@163.com"
+    }
+  ],
+  "minimum-stability": "stable",
+  "require": {
+    "symfony/http-foundation": "^5.1",
+    "illuminate/database": "^11.4",
+    "illuminate/events": "^11.4"
+  },
+  "autoload": {
+    "classmap": [
+      "app"
+    ]
+  }
+}

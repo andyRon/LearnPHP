@@ -427,6 +427,10 @@ public function actions()
 
 模型通过 **属性** 来代表业务数据，每个属性像是模型的公有可访问属性， [yii\base\Model::attributes()](https://www.yiichina.com/doc/api/2.0/yii-base-model#attributes()-detail) 指定模型所拥有的属性。
 
+所有 *non-static public非静态公有* 成员变量都是属性。
+
+
+
 #### 属性标签
 
 [yii\base\Model::getAttributeLabel()](https://www.yiichina.com/doc/api/2.0/yii-base-model#getAttributeLabel()-detail)
@@ -437,29 +441,102 @@ public function actions()
 
 
 
-
+> **信息**： 属性标签是 视图一部分，  但是在模型中声明标签通常非常方便，并可形成非常简洁可重用代码。
 
 ### 2 场景
 
 模型可能在多个 **场景** 下使用，例如 `User` 模块可能会在收集用户登录输入， 也可能会在用户注册时使用。在不同的场景下， 模型可能会使用不同的业务规则和逻辑， 例如 `email` 属性在注册时强制要求有，但在登陆时不需要。
 
- [yii\base\Model::$scenario](https://www.yiichina.com/doc/api/2.0/yii-base-model#$scenario-detail)
+[yii\base\Model::$scenario](https://www.yiichina.com/doc/api/2.0/yii-base-model#$scenario-detail)
 
+默认情况下，模型支持一个名为 `default` 的场景。
 
+默认情况下，模型支持的场景由模型中申明的验证规则来决定， 但你可以通过覆盖yii\base\Model::scenarios()方法来自定义行为
 
-### 3 验证规则
+### 3 验证规则（业务规则）
 
 当模型接收到终端用户输入的数据， 数据应当满足某种规则(称为 **验证规则**, 也称为 **业务规则**)。 例如假定`ContactForm`模型，你可能想确保所有属性不为空且 `email` 属性包含一个有效的邮箱地址， 如果某个属性的值不满足对应的业务规则， 相应的错误信息应显示，以帮助用户修正错误。
 
 可调用 [yii\base\Model::validate()](https://www.yiichina.com/doc/api/2.0/yii-base-model#validate()-detail) 来验证接收到的数据， 该方法使用[yii\base\Model::rules()](https://www.yiichina.com/doc/api/2.0/yii-base-model#rules()-detail)申明的验证规则来验证每个相关属性， 如果没有找到错误，会返回 true， 否则它会将错误保存在 [yii\base\Model::$errors](https://www.yiichina.com/doc/api/2.0/yii-base-model#$errors-detail) 属性中并返回false。
 
+
+
+一条规则可用来验证一个或多个属性，一个属性可对应一条或多条规则。
+
+
+
+```php
+public function rules()
+{
+    return [
+        // name, email, subject 和 body 属性必须有值
+        [['name', 'email', 'subject', 'body'], 'required'],
+
+        // email 属性必须是一个有效的电子邮箱地址
+        ['email', 'email'],
+    ];
+}
+```
+
+不同场景的规则（on指定场景，不指定此规则就应用到所有场景）：
+
+```php
+public function rules()
+{
+    return [
+        // 在"register" 场景下 username, email 和 password 必须有值
+        [['username', 'email', 'password'], 'required', 'on' => 'register'],
+
+        // 在 "login" 场景下 username 和 password 必须有值
+        [['username', 'password'], 'required', 'on' => 'login'],
+    ];
+}
+```
+
+
+
 ### 4 块赋值
 
+```php
+$model = new \app\models\ContactForm;
+$model->attributes = \Yii::$app->request->post('ContactForm');
+```
+
+#### 安全属性
+
+块赋值只应用在模型当前scenario 场景yii\base\Model::scenarios()方法 列出的称之为 安全属性 的属性上，例如，如果`User`模型申明以下场景， 当当前场景为`login`时候，只有`username` and `password` 可被块赋值， 其他属性不会被赋值。
+
+由于默认[yii\base\Model::scenarios()](https://www.yiichina.com/doc/api/2.0/yii-base-model#scenarios()-detail)的实现会返回 [yii\base\Model::rules()](https://www.yiichina.com/doc/api/2.0/yii-base-model#rules()-detail)所有属性和数据， 如果不覆盖这个方法，表示所有只要出现在活动验证规则中的属性都是安全的。
+
+为此，提供一个特别的别名为 `safe` 的验证器来申明 哪些属性是安全的不需要被验证， 如下示例的规则申明 `title` 和 `description` 都为安全属性。🔖
+
+```php
+public function rules()
+{
+    return [
+        [['title', 'description'], 'safe'],
+    ];
+}
+```
 
 
 
+#### 非安全属性
 
-### 5 数据导出
+如上所述，yii\base\Model::scenarios() 方法提供两个用处：**定义哪些属性应被验证，定义哪些属性安全**。 
+
+在某些情况下，你可能想验证一个属性但不想让他是安全的， 可在`scenarios()`方法中属性名加一个惊叹号 `!`。 例如像如下的`secret`属性。
+
+```php
+public function scenarios()
+{
+    return [
+        'login' => ['username', 'password', '!secret'],
+    ];
+}
+```
+
+### 5 数据导出 🔖
 
 字段
 
@@ -471,31 +548,102 @@ public function actions()
 
 ### 1 创建视图
 
+除了 `$this`之外，上述示例中的视图有其他预定义变量如 `$model`， 这些变量代表从控制器 或其他触发视图渲染的对象传入到视图的数据。
+
+> **提示：** 将预定义变量列到视图文件头部注释处， 这样可被IDE编辑器识别，也是生成视图文档的好方法。
+
+#### 安全
+
+当创建生成HTML页面的视图时，**在显示之前将用户输入数据进行转码和过滤非常重要**， 否则，你的应用可能会被 跨站脚本 攻击。
+
+#### 组织视图
+
 
 
 ### 2 渲染视图
 
+可在 控制器, 小部件, 或其他地方调用渲染视图方法来渲染视图。
+
 #### 控制器中渲染
+
+```php
+class PostController extends Controller
+{
+    public function actionView($id)
+    {
+        $model = Post::findOne($id);
+        if ($model === null) {
+            throw new NotFoundHttpException;
+        }
+
+        // 渲染一个名称为"view"的视图并使用布局
+        return $this->render('view', [
+            'model' => $model,
+        ]);
+    }
+}
+```
+
+
 
 #### 小部件中渲染
 
+```php
+class ListWidget extends Widget
+{
+    public $items = [];
+
+    public function run()
+    {
+        // 渲染一个名为 "list" 的视图
+        return $this->render('list', [
+            'items' => $this->items,
+        ]);
+    }
+}
+```
+
+
+
 #### 视图中渲染
+
+可以在视图中渲染另一个视图，可以调用[view component](https://www.yiichina.com/doc/api/2.0/yii-base-view)视图组件提供的以下方法：
+
+- [render()](https://www.yiichina.com/doc/api/2.0/yii-base-view#render()-detail): 渲染一个 [视图名](https://www.yiichina.com/doc/guide/2.0/structure-views#named-views).
+- renderAjax() : 渲染一个视图名并注入所有注册的JS/CSS脚本和文件，通常使用在响应AJAX网页请求的情况下。
+  - [别名](https://www.yiichina.com/doc/guide/2.0/concept-aliases)下的视图文件。
+
+```php
+<?= $this->render('_overview') ?>
+```
 
 #### 其它地方渲染
 
+在任何地方都可以通过表达式 `Yii::$app->view` 访问 [view](https://www.yiichina.com/doc/api/2.0/yii-base-view) 应用组件。
+
+```php
+echo \Yii::$app->view->renderFile('@app/views/site/license.php');
+```
+
 #### 视图名
+
+
 
 #### 视图中访问数据
 
-#### 视图间共享数据
+
+
+#### 视图间共享数据 🔖
 
 
 
-### 3 布局 🔖
+### 3 布局 
 
 布局是一种特殊的视图，代表多个视图的公共部分， 例如，大多数Web应用共享相同的页头和页尾， 在每个视图中重复相同的页头和页尾，更好的方式是将这些公共放到一个布局中， 渲染内容视图后在合适的地方嵌入到布局中。
 
 #### 创建布局
+
+
 
 #### 布局中访问数据
 
@@ -503,7 +651,13 @@ public function actions()
 
 #### 嵌套布局
 
+
+
 #### 使用数据块
+
+数据块可以在一个地方指定视图内容在另一个地方显示，通常和布局一起使用， 例如，可在内容视图中定义数据块在布局中显示它。
+
+
 
 
 
@@ -529,11 +683,46 @@ public function actions()
 
 [View components](https://www.yiichina.com/doc/api/2.0/yii-base-view) 视图组件会在视图渲染过程中触发几个事件， 可以在内容发送给终端用户前，响应这些事件来添加内容到视图中或调整渲染结果。
 
+- 该事件可设置 [yii\base\ViewEvent::$isValid](https://www.yiichina.com/doc/api/2.0/yii-base-viewevent#$isValid-detail) 为 false 取消视图渲染。
+- [EVENT_AFTER_RENDER](https://www.yiichina.com/doc/api/2.0/yii-base-view#EVENT_AFTER_RENDER-detail): 在布局中调用 [yii\base\View::afterRender()](https://www.yiichina.com/doc/api/2.0/yii-base-view#afterRender()-detail) 时触发， 该事件可获取[yii\base\ViewEvent::$output](https://www.yiichina.com/doc/api/2.0/yii-base-viewevent#$output-detail)的渲染结果， 可修改该属性来修改渲染结果。
+- [EVENT_BEGIN_PAGE](https://www.yiichina.com/doc/api/2.0/yii-base-view#EVENT_BEGIN_PAGE-detail): 在布局调用 [yii\base\View::beginPage()](https://www.yiichina.com/doc/api/2.0/yii-base-view#beginPage()-detail) 时触发；
+- [EVENT_END_PAGE](https://www.yiichina.com/doc/api/2.0/yii-base-view#EVENT_END_PAGE-detail): 在布局调用 [yii\base\View::endPage()](https://www.yiichina.com/doc/api/2.0/yii-base-view#endPage()-detail) 是触发；
+- [EVENT_BEGIN_BODY](https://www.yiichina.com/doc/api/2.0/yii-web-view#EVENT_BEGIN_BODY-detail): 在布局调用 [yii\web\View::beginBody()](https://www.yiichina.com/doc/api/2.0/yii-web-view#beginBody()-detail) 时触发；
+- [EVENT_END_BODY](https://www.yiichina.com/doc/api/2.0/yii-web-view#EVENT_END_BODY-detail): 在布局调用 [yii\web\View::endBody()](https://www.yiichina.com/doc/api/2.0/yii-web-view#endBody()-detail) 时触发。
 
+```php
+\Yii::$app->view->on(View::EVENT_END_BODY, function () {
+    echo date('Y-m-d');
+})
+```
 
 
 
 ### 6 渲染静态页面
+
+如果Web站点包含很多静态页面，多次重复相似的代码显得很繁琐， 为解决这个问题，可以使用一个在控制器中称为 [yii\web\ViewAction](https://www.yiichina.com/doc/api/2.0/yii-web-viewaction) 的[独立动作](https://www.yiichina.com/doc/guide/2.0/structure-controllers#standalone-actions)。 例如：
+
+```php
+class SiteController extends Controller
+{
+    public function actions()
+    {
+        return [
+            'page' => [
+                'class' => 'yii\web\ViewAction',
+            ],
+        ];
+    }
+}
+```
+
+现在如果你在`@app/views/site/pages`目录下创建名为 `about` 的视图， 可通过如下url显示该视图：
+
+```
+http://localhost/index.php?r=site/page&view=about
+```
+
+`GET` 中 `view` 参数告知 [yii\web\ViewAction](https://www.yiichina.com/doc/api/2.0/yii-web-viewaction) 动作请求哪个视图，然后操作在 `@app/views/site/pages`目录下寻找该视图，可配置 [yii\web\ViewAction::$viewPrefix](https://www.yiichina.com/doc/api/2.0/yii-web-viewaction#$viewPrefix-detail) 修改搜索视图的目录。
 
 
 
@@ -555,21 +744,53 @@ forum/
             index.php            index 视图文件
 ```
 
+#### 模块类
+
+当一个模块被访问， 和 [应用主体实例](https://www.yiichina.com/doc/guide/2.0/structure-applications) 类似会创建该模块类唯一实例，模块实例用来帮模块内代码共享数据和组件。
+
+#### 模块中的控制器
+
+#### 模块中的视图
+
+
+
+#### 模块中的控制台命令
+
+```sh
+yii <module_id>/<command>/<sub_command>
+```
+
+
+
 
 
 ### 2 使用模块
+
+要在应用中使用模块，只需要将模块加入到应用主体配置的[modules](https://www.yiichina.com/doc/api/2.0/yii-base-module#$modules-detail)属性的列表中。
+
+#### 路由 🔖
+
+
+
+#### 访问模块
+
+
+
+#### 引导启动模块
+
+
 
 
 
 ### 3 模块嵌套
 
-
+模块可无限级嵌套。
 
 ### 4 从模块内部访问组件
 
+从 2.0.13 版本开始模块支持 [tree traversal](https://www.yiichina.com/doc/guide/2.0/concept-service-locator#tree-traversal)。 这允发模块开发人员通过作为其模块的服务定位器去引用（应用程序）组件。 这意味着最好使用 `$module->get('db')` 而不是 `Yii::$app->get('db')`。 在需要不同组件（配置）的情况下， 模块开发者能够指定要用于模块的特定组件。
 
-
-## 过滤器
+## 过滤器 🔖
 
 `ActionFilter`
 
@@ -629,11 +850,33 @@ Yii 提供了一组常用过滤器，在 `yii\filters` 命名空间下
 
 
 
-## 小部件(widgets)
+## 小部件(widgets)🔖
 
 小部件是在视图中使用的**可重用单元**， 使用面向对象方式创建复杂和可配置用户界面单元。
 
 Yii提供许多优秀的小部件，比如 [active form](https://www.yiichina.com/doc/api/2.0/yii-widgets-activeform)，[menu](https://www.yiichina.com/doc/api/2.0/yii-widgets-menu)， [jQuery UI widgets](https://www.yiichina.com/doc/guide/2.0/widget-jui)， [Twitter Bootstrap widgets](https://www.yiichina.com/doc/guide/2.0/widget-bootstrap)。
+
+### 使用小部件
+
+
+
+
+
+### 创建小部件
+
+
+
+#### 1 使用 `widget()` 方法
+
+
+
+
+
+#### 2 使用 `begin()` 和 `end()` 方法
+
+
+
+
 
 
 
@@ -677,9 +920,17 @@ Yii 在*资源包*中管理资源，资源包简单的说就是放在一个目�
 
 
 
-## 扩展（Extensions）
+## 扩展（Extensions）🔖
 
 扩展是专门设计的在 Yii 应用中随时可拿来使用的， 并可重发布的软件包。例如， [yiisoft/yii2-debug](https://github.com/yiisoft/yii2-debug) 扩展在你的应用的每个页面底部添加一个方便用于调试的工具栏， 帮助你简单地抓取页面生成的情况。 你可以使用扩展来加速你的开发过程。
+
+### 使用扩展
+
+composer
+
+手动安装扩展
+
+### 创建扩展
 
 
 
@@ -713,7 +964,7 @@ Yii 在*资源包*中管理资源，资源包简单的说就是放在一个目�
 
 Composer 自动加载器
 
-在[入口脚本](https://www.yiichina.com/doc/guide/2.0/structure-entry-scripts)里，需注册各个类库的类文件自动加载器（Class Autoloader，简称自动加载器）。 这主要包括通过其 `autoload.php` 文件加载的Composer 自动加载器，以及通过 `Yii` 类加载的 Yii 自动加载器。之后， 入口脚本会加载应用的[配置（configuration）](https://www.yiichina.com/doc/guide/2.0/concept-configurations)并创建一个 [应用主体](https://www.yiichina.com/doc/guide/2.0/structure-applications) 的实例。
+在[入口脚本](https://www.yiichina.com/doc/guide/2.0/structure-entry-scripts)里，需**注册各个类库的类文件自动加载器**（Class Autoloader，简称自动加载器）。 这主要包括通过其 `autoload.php` 文件加载的Composer 自动加载器，以及通过 `Yii` 类加载的 Yii 自动加载器。之后， 入口脚本会加载应用的[配置（configuration）](https://www.yiichina.com/doc/guide/2.0/concept-configurations)并创建一个 [应用主体](https://www.yiichina.com/doc/guide/2.0/structure-applications) 的实例。
 
 在应用主体的构造函数中，会执行以下引导工作：
 

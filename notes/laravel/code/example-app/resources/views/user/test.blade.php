@@ -15,7 +15,8 @@
 {{--<p> @datetime('2023-04-01', 'F d, Y') </p>--}}
 
     <div id="app">
-        <welcome-component></welcome-component>
+{{--        <welcome-component></welcome-component>--}}
+        {{ $name }}
     </div>
 </body>
 </html>

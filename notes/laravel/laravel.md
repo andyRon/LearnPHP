@@ -59,6 +59,9 @@ https://learnku.com/docs/laravel/10.x
 
 ```sh
 composer create-project laravel/laravel example-app
+# 指定版本
+composer create-project laravel/laravel example-app  10.x
+
 
 composer global require laravel/installer
 laravel new example-app
@@ -94,7 +97,7 @@ Laravel 也可以作为 JavaScript 单页应用程序或移动应用程序的 AP
 
 ### 2.2 配置信息
 
-
+Laravel所有配置文件都在 config 目录。
 
 ```
 php artisan about
@@ -110,19 +113,19 @@ php artisan config:show database
 
 #### 环境配置
 
- [DotEnv](https://github.com/vlucas/phpdotenv) 
+ Laravel 利用[DotEnv](https://github.com/vlucas/phpdotenv)库加载配置文件`.env`中的配置。 
 
 
 
-`.env` 文件不应该提交到版本管理器中
+> `.env` 文件不应该提交到版本管理器中
 
 
 
-`App::environment()`
+获取当前环境配置: `App::environment()`
 
 
 
-##### 环境文件加密
+##### 环境文件加密🔖
 
 ```sh
 php artisan env:encrypt [--key=3UVsEgGVK36XN82KKeyLFMhvosbZN1aF]
@@ -138,7 +141,7 @@ php artisan env:decrypt [--key=3UVsEgGVK36XN82KKeyLFMhvosbZN1aF] [--cipher=AES-1
 
 #### 访问配置值
 
-`config()`
+`config('app.timezone')`
 
 
 
@@ -152,15 +155,36 @@ php artisan env:decrypt [--key=3UVsEgGVK36XN82KKeyLFMhvosbZN1aF] [--cipher=AES-1
 
 #### 调试模式
 
+对于本地开发，你应该将 APP_DEBUG 环境变量设置为 true。 在你的生产环境中，此值应始终为 false。 如果在生产环境中将该变量设置为 true，你可能会将敏感的配置值暴露给应用程序的最终用户。
+
 
 
 #### 维护模式
 
 ```sh
 php artisan down [--refresh=15] [--retry=60]
+
+# 将指示浏览器在指定秒数后自动刷新页面
+php artisan down --refresh=15
+
+php artisan up
 ```
 
 ##### 绕过维护模式
+
+
+
+##### 预渲染维护模式视图🔖
+
+
+
+##### 重定向维护模式请求
+
+维护模式，指示 Laravel 重定向所有请求到一个特定的 URL
+
+```sh
+php artisan down --redirect=/
+```
 
 
 
@@ -174,7 +198,7 @@ php artisan down [--refresh=15] [--retry=60]
 
 
 
-### 2.4 前端
+### 2.4 前端 
 
 在使用 Laravel 构建应用时，有两种主要的方式来解决前端开发问题，选择哪种方式取决于你是否想通过 PHP 或使用像 Vue 和 React 这样的 JavaScript 框架来构建前端。
 
@@ -184,11 +208,13 @@ Blade
 
 
 
+#### Livewire 🔖
+
 [Laravel Livewire](https://laravel-livewire.com/) 是一个用于构建 Laravel 前端的框架，具有与使用现代 JavaScript 框架（如 Vue 和 React ）构建的前端一样的动态、现代和生动的感觉。
 
+[《Livewire 中文文档》](https://learnku.com/docs/livewire/3.x)
 
-
-
+ [Alpine.js](https://alpinejs.dev/) 
 
 
 
@@ -198,7 +224,7 @@ Blade
 
 [Inertia](https://inertiajs.com/) 可以桥接你的 Laravel 应用程序和现代 Vue 或 React 前端，使你可以使用 Vue 或 React 构建完整的现代前端，同时利用 Laravel 路由和控制器进行路由、数据注入和身份验证 - 所有这些都在单个代码存储库中完成。使用这种方法，你可以同时享受 Laravel 和 Vue / React 的全部功能，而不会破坏任何一种工具的能力。
 
-
+🔖
 
 
 
@@ -236,7 +262,7 @@ Blade
 
 #### Laravel Breeze
 
-[Laravel Breeze](https://github.com/laravel/breeze) 是 Laravel 的 认证功能 的一种简单、最小实现，包括登录、注册、密码重置、电子邮件验证和密码确认。此外，Breeze 还包括一个简单的「个人资料」页面，用户可以在该页面上更新其姓名、电子邮件地址和密码。
+[Laravel Breeze](https://github.com/laravel/breeze) 是 Laravel 的 ==认证功能== 的一种简单、最小实现，包括登录、注册、密码重置、电子邮件验证和密码确认。此外，Breeze 还包括一个简单的「个人资料」页面，用户可以在该页面上更新其姓名、电子邮件地址和密码。
 
 ```sh
 composer require laravel/breeze --dev
@@ -309,6 +335,26 @@ Web 服务器将所有请求指向应用程序的 public/index.php 文件。永�
 
 ### 请求周期 
 
+1. web 服务器（Apache/Nginx）配置定向
+
+2. `public/index.php`
+
+加载 Composer 生成的自动加载器定义；
+
+从 bootstrap/app.php 中检索 Laravel 应用程序的实例
+
+3. HTTP内核/Console内核 `Illuminate\Foundation\Http\Kernel`
+
+该类定义了一个将在执行请求之前运行的 `bootstrappers` 数组。这些引导程序用来**配置异常处理、配置日志、检测应用程序环境，并执行在实际处理请求之前需要完成的其他任务**。
+
+HTTP 内核还定义了一个 **HTTP中间件列表**，所有请求在被应用程序处理之前都必须通过该列表。这些中间件处理读写 HTTP 会话 ，确定应用程序是否处于维护模式， 校验 CSRF 令牌 , 等等。
+
+
+
+
+
+最重要的内核引导操作之一是为==应用程序加载服务提供者== 。应用程序的所有服务提供程序都在 config/app.php 文件中的 providers 数组。
+
 
 
 ### 服务容器
@@ -316,6 +362,8 @@ Web 服务器将所有请求指向应用程序的 public/index.php 文件。永�
 
 
 ### 服务提供者
+
+`Illuminate\Support\ServiceProvider`
 
 服务提供者是所有 Laravel 应用程序的引导中心。你的应用程序，以及通过服务器引导的 Laravel 核心服务都是通过服务提供器引导。
 
@@ -914,7 +962,7 @@ Laravel Cashier Stripe 为 Stripe 的订阅计费服务提供了一个富有表�
 
 
 
-# Laravel 入门到精通教程
+# Laravel入门到精通教程
 
 https://laravelacademy.org/books/laravel-tutorial
 
@@ -954,3 +1002,55 @@ https://laravelacademy.org/books/laravel-tutorial
 composer create-project laravel/laravel myblog --prefer-dist 10.*
 ```
 
+
+
+
+
+# Laravel入门项目：博客系列教程
+
+参考：https://laravelacademy.org/books/laravel-blog-tutorial
+
+代码：https://github.com/andyRon/arblog-laravel
+
+
+
+```sh
+composer require laravel/breeze --dev
+php artisan breeze:install
+```
+
+
+
+
+
+🔖   sass   DataTables
+
+
+
+## 后台文件上传
+
+默认存放在 `storage/app/public` 目录下
+
+
+
+## 在后台实现文章增删改查功能（支持Markdown）
+
+🔖
+
+
+
+# 项目：测试驱动API开发
+
+https://laravelacademy.org/books/test-driven-apis-with-laravel
+
+简单的薪资系统CRM
+
+
+
+# Laravel内核分析
+
+https://learnku.com/docs/laravel-kernel
+
+https://learnku.com/docs/laravel-core-concept/5.5
+
+https://learnku.com/articles/52852

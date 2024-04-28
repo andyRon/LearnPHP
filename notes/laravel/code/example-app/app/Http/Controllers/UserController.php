@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route;
@@ -20,16 +21,15 @@ class UserController extends Controller
         ]);
     }
 
-    public function show(string $id): Response
+    public function show()
     {
-        return Inertia::render('', [
-            'user' => 'ddxx'
-        ]);
+//        return Inertia::render('Users/Profile', [
+//            'user' => 12
+//        ]);
     }
 
     public function test(Request $request): View
     {
-        print_r($request->except('id'));
         return view('user.test', [
             'user' => 123,
             'name' => 'andy',

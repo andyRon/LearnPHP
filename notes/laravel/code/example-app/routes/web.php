@@ -4,6 +4,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\UserController;
+use App\Livewire\Counter;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\WelcomeController;
@@ -31,9 +32,11 @@ Route::get('/andy', function () {
     return view('andy');
 });
 
-Route::get('/counter', function () {
-    return view('livewire.counter');
-});
+//Route::get('/counter', function () {
+//    return view('livewire.counter');
+//});
+
+Route::get('/counter', Counter::class);
 
 
 require __DIR__.'/auth.php';
@@ -174,7 +177,7 @@ Route::delete('task/{id}', function ($id) {
 // php
 Route::get('user/{id?}', function ($id = 1) {
     return view('user.profile', ['id' => $id]);
-})->name('user.profile');
+})->where('id', '[0-9]+')->name('user.profile');
 // blade
 Route::get('page/{id}', function ($id) {
     return view('page.show', ['id' => $id]);
@@ -197,3 +200,6 @@ Route::get('test_artisan', function () {
         'name' => 'andy'
     ]);
 });
+
+
+Route::get('user/show', [UserController::class, 'show']);

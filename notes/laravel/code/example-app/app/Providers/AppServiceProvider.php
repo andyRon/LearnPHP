@@ -40,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
 
             return "<?php echo \Carbon\Carbon::parse({$date})->format({$format}); ?>";
         });
+
     }
 
 }

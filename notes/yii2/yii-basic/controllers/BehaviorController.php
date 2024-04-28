@@ -31,4 +31,9 @@ class BehaviorController extends Controller
         $goods->count = 110;
         $goods->save();
     }
+
+    public function actionIndex3()
+    {
+        die('sadfzzz');
+    }
 }

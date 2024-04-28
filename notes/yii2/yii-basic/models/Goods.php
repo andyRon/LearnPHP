@@ -41,5 +41,6 @@ class Goods extends ActiveRecord
 //                'class' => BlameableBehavior::class
 //            ]
         ];
+
     }
 }

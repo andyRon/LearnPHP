@@ -9,9 +9,12 @@ use App\Model\Album;
 use App\Model\Message;
 use Carbon\Carbon;
 
+/**
+ * 首页
+ */
 class HomeController extends Controller
 {
-    public function index()
+    public function index(): void
     {
         $albums = Album::all()->toArray();
         $pageTitle = $siteName = $this->siteName;
@@ -28,15 +31,17 @@ class HomeController extends Controller
         ]);
     }
 
-    public function about()
+    public function about(): void
     {
-        // TODO
         $response = new Response('', 301, ['Location' => 'https://andyron.top/about']);
         $response->send();
     }
 
-    // 联系表单页面
-    public function contact()
+    /**
+     * 联系表单页面
+     * @throws ValidationException
+     */
+    public function contact(): void
     {
         if ($this->request->getMethod() == 'GET') {
             $pageTitle = '联系我 - ' . $this->container->resolve('app.name');

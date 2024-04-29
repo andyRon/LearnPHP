@@ -1,6 +1,7 @@
 <?php
 namespace App\Model;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Album extends Model
 {
@@ -8,7 +9,7 @@ class Album extends Model
     public $timestamps = false;
     public $guarded = ['id'];
 
-    public function posts()
+    public function posts(): HasMany
     {
         return $this->hasMany(Post::class);
     }

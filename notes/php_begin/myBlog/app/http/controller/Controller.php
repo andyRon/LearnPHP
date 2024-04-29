@@ -8,30 +8,30 @@ use App\Http\Session;
 use App\Store\StoreContract;
 use App\View\View;
 
+/**
+ * 控制器基类
+ */
 class Controller
 {
     /**
-     * @var StoreContract
+     * 数据库连接
      */
-    protected $connection;
+    protected StoreContract $connection;
     /**
-     * @var Container
+     * 应用容器
      */
-    protected $container;
+    protected Container $container;
     /**
-     * @var Request
+     * 全局请求实例
      */
-    protected $request;
+    protected Request $request;
+    /**
+     */
+    protected View $view;
 
     /**
-     * @var View
      */
-    protected $view;
-
-    /**
-     * @var Session
-     */
-    protected $session;
+    protected Session $session;
 
     protected $siteName;
     public function __construct()

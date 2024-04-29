@@ -1,14 +1,15 @@
 <?php
-
 namespace App\Http\controller;
-
 
 use App\Model\Post;
 use App\Printer\PrinterContract;
 
+/**
+ * 处理文章页请求
+ */
 class PostController extends Controller
 {
-    public function show()
+    public function show(): void
     {
         $id = intval($this->request->get('id'));
         if (empty($id)) {

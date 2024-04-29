@@ -4,9 +4,12 @@ namespace App\Http\controller;
 
 use App\Model\Album;
 
+/**
+ * 处理专辑页请求
+ */
 class AlbumController extends Controller
 {
-    public function list()
+    public function list(): void
     {
         $id = intval($this->request->get('id'));
         if (empty($id)) {
@@ -15,6 +18,7 @@ class AlbumController extends Controller
         }
         $album = Album::with('posts')->findOrFail($id)->toArray();
         $posts = $album['posts'];
+        // TODO
         array_walk($posts, function (&$post) {
             $post['summary'] = mb_substr(strip_tags($post['html']), 0, 81) . '...';
         });

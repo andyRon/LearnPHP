@@ -10,9 +10,8 @@ use App\Core\Container;
 class ViewProvider
 {
     /**
-     * @var Container
      */
-    protected $container;
+    protected Container $container;
 
     public function __construct($container)
     {
@@ -20,9 +19,9 @@ class ViewProvider
     }
 
     /**
-     * 将 View 对象实例绑定到全局服务容器中
+     * 将View对象实例绑定到全局服务容器中
      */
-    public function register()
+    public function register(): void
     {
         $this->container->bind('view', function () {
             $config = $this->container->resolve('view.engine');

@@ -63,6 +63,7 @@ $request = $container->resolve('request');
 //    }
 //});
 
+// TODO 将HomeController@index形式改为[HomeController::class, 'index']
 $router->register('get', '/', 'HomeController@index');
 $router->register('get', 'about', 'HomeController@about');
 $router->register(['get', 'post'], 'contact', 'HomeController@contact');

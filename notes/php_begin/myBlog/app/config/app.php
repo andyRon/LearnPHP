@@ -26,9 +26,9 @@ return [
         ],
         'editor' => 'markdown',  // 支持html和markdown
         'providers' => [
-//        \App\Store\StoreProvider::class,
+            \App\Store\StoreProvider::class,
             \App\Printer\PrinterProvider::class,
-            \App\View\ViewProvider::class
+            \App\View\ViewProvider::class,  // 注册视图提供者
         ],
     ],
     'view' => [

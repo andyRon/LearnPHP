@@ -3,6 +3,7 @@
 namespace App\Model;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Post extends Model
 {
@@ -15,12 +16,14 @@ class Post extends Model
 //
 //    public $table = 'posts';
 
+    // 禁用 Eloquent 模型类自动维护时间字段机制
     public $timestamps = false;
+
     protected $guarded = ['id', 'created_at'];
 
     // 定义某个 Post 模型实例归属于 Album 模型实例（通过 album_id 字段），
     // 而在 Album 类中通过 posts() 方法定义一个 Album 模型实例可能包含多个 Post 模型实例（一对多关联），这种关联关系与数据表记录的关联关系对应
-    public function album()
+    public function album(): BelongsTo
     {
         return $this->belongsTo(Album::class);
     }

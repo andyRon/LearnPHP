@@ -11,14 +11,12 @@ class View
 {
     /**
      * 模板引擎对象
-     * @var ViewEngine
      */
-    protected $engine;
+    protected ViewEngine $engine;
     /**
      * 视图模板的根路径
-     * @var string
      */
-    protected $basePath;
+    protected string $basePath;
 
     public function __construct(ViewEngine $engine, $basePath)
     {
@@ -32,7 +30,7 @@ class View
      * @param $data
      * @return void
      */
-    public function render($path, $data)
+    public function render($path, $data): void
     {
         $response = new Response();
         try {

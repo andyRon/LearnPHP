@@ -1,3 +1,11 @@
 {
-    "/public/js/app.js": "/public/js/app.js"
+    "/public/js/admin.js": "/public/js/admin.js",
+    "/public/js/app.js": "/public/js/app.js",
+    "/public/css/app.css": "/public/css/app.css",
+    "/public/css/admin.css": "/public/css/admin.css",
+    "/public/js/chart.js": "/public/js/chart.js",
+    "/public/js/contact.js": "/public/js/contact.js",
+    "/public/js/table.js": "/public/js/table.js",
+    "/public/css/fontawesome.css": "/public/css/fontawesome.css",
+    "/public/css/table.css": "/public/css/table.css"
 }

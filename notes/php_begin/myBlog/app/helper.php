@@ -1,6 +1,5 @@
 <?php
 
-
 if (!function_exists('redirect')) {
     function redirect($route, $statusCode = 301)
     {

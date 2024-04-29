@@ -279,6 +279,49 @@ vendor/autoload.php   ->   autoload_real.php  ->  vendor/composer/autoload_stati
 
 
 
+### 基于 Symfony 组件封装 HTTP 请求响应类
+
+基于 [Symfony](https://symfony.com/) 提供的 [HTTP Foundation](https://symfony.com/doc/current/components/http_foundation.html) 组件来实现，Symfony 本身是一个著名的 PHP MVC 框架，它提供了丰富的 PHP 组件集，可以独立于 Symfony 框架之外使用，你可以在这里看到 Symfony 提供的全部组件集：[Symfony Components](https://symfony.com/doc/current/components/index.html)，这是 Symfony 作为框架之外对 PHP 生态的巨大贡献。
+
+Symfony HTTP Foundation组件包含了对 PHP HTTP 请求、响应和会话功能的封装，通过这些封装类实例提供的方法，我们可以以面向对象的风格进行 HTTP 编程，而不再需要到处使用 `$_SERVER`、`$_REQUEST`、`$_FILES`、`$_SESSION` 之类的超全局变量，从而方便代码的风格统一和后期维护。以 `Request` 类为例，它封装了 `$_GET`、`$_POST`、`$_COOKIE`、`$_SERVER`、`$_FILES` 等所有超全局变量中的信息，在设置/获取的时候，使用特定的 API 方法即可，而不需要操作这些超全局变量。[HttpFoundation 组件文档](https://symfony.com/doc/current/components/http_foundation.html)
+
+```
+composer require symfony/http-foundation
+```
+
+
+
+### 通过 PHP 原生代码实现 HTTP 路由器
+
+这里的路由器和计算机网络中的路由器不是一个东西，但是原理类似，都是用于==对网络请求进行分发==，不同之处在于前者是**对进入Web应用中的用户请求通过请求路径和方法进行分发**，后者是**对不同主机之间的网络请求通过IP地址和端口号进行分发**。
+
+
+
+### 通过 PHP 原生代码实现 HTTP 控制器
+
+
+
+
+
+### 通过 PHP 原生代码实现视图模板引擎的解析和渲染
+
+PHP原生代码的视图渲染实现比较简单粗暴，就是直接通过 `include` 语句引入对应的 PHP 视图模板，然后在当前作用域内有效的变量会在引入的视图模板中生效，以博客应用首页为例，对应的视图引入代码是这样的（代码位于 `HomeController.php` 中）：
+
+```php
+public function index()
+{
+    $albums = $this->connection->table('albums')->selectAll();
+    $pageTitle = $siteName = $this->container->resolve('app.name');
+    $siteUrl = $this->container->resolve('app.url');
+    $siteDesc = $this->container->resolve('app.desc');
+    include __DIR__  . "/../../../views/home.php";
+}
+```
+
+在 PHP 中，之所以可以直接这样渲染 HTML 视图，得益于 PHP 脚本和 HTML 文档可以混合编程，**PHP本身就看作是一种视图模板引擎**，而不需要像其他语言那样（比如 Java、Go、Python），要引入额外的视图模板语言才能在 HTML 文档中动态引入变量进行渲染。
+
+
+
 
 
 
@@ -295,8 +338,6 @@ vendor/autoload.php   ->   autoload_real.php  ->  vendor/composer/autoload_stati
 
 然后运行 `composer dump-auto` 让新增的命名空间类映射关系生效。
 
-
-
 🔖  public/   resources/
 
 
@@ -305,7 +346,7 @@ vendor/autoload.php   ->   autoload_real.php  ->  vendor/composer/autoload_stati
 
 #### ORM 及其实现模式
 
-模型类负责与数据库进行交互，这里的模型指的是数据表的模型，一个模型类对应一张数据表，数据表的字段会映射为模型类的属性，我们可以通过模型类提供的方法实现对应数据表记录的增删改查，这样一来，我们就将原来面向过程的数据库操作转化为面向对象风格的编程，将对数据表的 SQL 执行转化为对模型类的方法调用。
+模型类负责与数据库进行交互，这里的模型指的是**数据表的模型**，一个模型类对应一张数据表，数据表的字段会映射为模型类的属性，我们可以通过模型类提供的方法实现对应数据表记录的增删改查，这样一来，我们就将原来面向过程的数据库操作转化为面向对象风格的编程，将对数据表的 SQL 执行转化为对模型类的方法调用。
 
 这种对象与数据表的映射称之为对象关系映射（Object Relational Mapping），简称 **ORM**。ORM 两种最常见的实现方式是 ==Active Record== 和 ==Data Mapper==，Active Record 尤其流行，在很多框架中都能看到它的身影，比如 Laravel 框架使用的 [Eloquent ORM](https://laravelacademy.org/post/21546) 使用的就是 Active Record 模式，而 Symfony 框架使用的 [Doctrine ORM](https://www.doctrine-project.org/) 使用的则是 Data Mapper 模式。
 
@@ -351,4 +392,104 @@ CREATE TABLE `posts` (
 
 
 
-🔖 https://laravelacademy.org/post/21690
+### 引入Laravel Mix管理前端资源
+
+小项目使用原始的方式引入前端资源文件 —— 在特定目录下存放完整的 CSS、JavaScript 文件，然后在 HTML 文档中静态引入。
+
+但是对于现代化的大型项目，尤其是引入工程化、模块化管理的前后端分离项目，显然就不合适了，因为前端项目需要通过 NPM 引入各种第三方依赖以模块化方式构建复杂功能，以及 Less、Sass 等预处理语言编写模块化样式代码，然后通过 WebPack 对其这些前端资源进行编译、打包、压缩、分发，变成最终可用的静态资源文件。
+
+[Laravel Mix](https://github.com/JeffreyWay/laravel-mix)组件对 Webpack 的构建步骤做了封装，提供了一套非常简单的流式 API 帮助我们对 CSS 和 JavaScript 资源文件进行预处理。
+
+
+
+### 将博客主题替换成 Clean Blog
+
+#### 初始化资源目录
+
+在此之前，我们先为前端资源创建对应目录，在根目录下创建 `resources` 目录，然后在该目录下新建 `js`、`sass` 子目录，分别用于存放编译前的脚本、样式文件。
+
+在 `public` 目录下新建 `js` 子目录用于存放编译打包后的 JavaScript 脚本文件。
+
+将原来位于项目根目录下的 `views` 目录整体移动到 `resources` 目录下，然后在 `app/config/app.php` 中修改 `view['path']` 配置值。
+
+这样一来，JavaScript、Css 和 HTML 预处理文件都位于同一个 `resources` 目录下了，便于统一查找和管理。
+
+#### 下载相关依赖库
+
+选择使用 [Clean Blog](https://startbootstrap.com/theme/clean-blog/) 作为博客主题，这是一个基于 [Bootstrap 框架](https://getbootstrap.com/)的免费主题，不同于以往下载主题包及关联前端资源文件到本地再引入，我们现在可以直接通过 NPM 下载相关依赖：
+
+```
+npm install --save-dev startbootstrap-clean-blog bootstrap jquery popper.js
+```
+
+#### JavaScript 脚本处理
+
+
+
+#### CSS 样式处理
+
+
+
+#### 编译前端资源文件
+
+执行 `npm run dev` 编译打包前端资源
+
+
+
+#### 重构视图模板
+
+对于原有的三个视图模板，需要基于 Clean Blog 的 HTML 模版对其进行重构。并且由于所有视图模板现在共用统一的 JavaScript 和 CSS 文件，我们可以将页面头部和底部代码拆分出来，成为独立的局部视图被其他视图模板引入，从而提高代码的复用性。
+
+
+
+### 创建联系表单页面并通过 Ajax 提交表单请求数据
+
+
+
+🔖 jqBootstrapValidation
+
+
+
+### PHP 后端表单验证和请求处理
+
+```mysql
+CREATE TABLE `messages` (
+  `id` int UNSIGNED NOT NULL,
+  `name` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+  `email` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `phone` varchar(20) COLLATE utf8mb4_general_ci NOT NULL,
+  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `created_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='消息表';
+```
+
+
+
+### 引入SB Admin2作为后台管理系统主题
+
+ 博客项目后台管理系统，主要包含登录认证，仪表盘页面，专辑、文章的创建、修改和删除，以及消息后台查看等功能。
+
+[SB Admin 2](https://startbootstrap.com/theme/sb-admin-2)
+
+```
+npm i startbootstrap-sb-admin-2 --save-dev
+```
+
+
+
+### 通过PHP原生代码基于Cookie + Session机制实现后台用户认证功能
+
+
+
+### 在博客后台为专辑、文章、消息模块实现增删改查功能
+
+
+
+
+
+```
+composer dump-auto
+
+npm run dev
+```
+

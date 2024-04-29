@@ -8,6 +8,8 @@
 
 https://learnku.com/docs/laravel/10.x
 
+`example-app`学习Laravel时的项目
+
 ## 1 前言
 
 ### 10.x发行说明
@@ -1044,6 +1046,132 @@ php artisan breeze:install
 https://laravelacademy.org/books/test-driven-apis-with-laravel
 
 简单的薪资系统CRM
+
+## 理论基础篇
+
+### TDD 基本流程
+
+> **测试驱动开发**（英语：Test-driven development，缩写为TDD）是一种软件开发过程中的应用方法，由[极限编程](https://zh.m.wikipedia.org/wiki/极限编程)中倡导，以其倡导先写测试程序，然后编码实现其功能得名。测试驱动开发始于20世纪90年代。测试驱动开发的目的是取得**快速反馈**并使用“illustrate the main line”方法来构建程序。
+>
+> 测试驱动开发是戴两顶帽子思考的开发方式：先戴上**实现功能**的帽子，在测试的辅助下，快速实现其功能；再戴上**[重构](https://zh.m.wikipedia.org/wiki/软件重构)**的帽子，在测试的保护下，通过去除冗余的代码，提高代码品质。测试驱动着整个开发过程：首先，驱动代码的设计和功能的实现；其后，驱动代码的再设计和重构。
+
+因此，在标准的测试驱动开发流程中，第一步是编写测试代码指定你想如何使用你的类/函数（它们尚不存在），在这之后，才开始编写写实际的代码，待测试通过后，我们可以在测试的保护下，对代码不断进行优化、重构、迭代。
+
+#### The red
+
+在类/函数尚不存在，或者存在问题时，编写测试用例运行结果一定是红色的（表示不通过），测试驱动开发的过程就是不断把红色消除，让运行结果呈现绿色的（表示通过）过程。
+
+假设我们要实现一个计算器的除法方法，可以先编写单元测试用例代码如下：
+
+```php
+$calculator = new Calculator();
+// I expept to be 5.00
+$result = $calculator->divide(10, 2);
+// I expect to be 3.33
+$result = $calculator->divide(10, 3);
+// I expect to be 0.00 instead of an Exception
+$result = $calculator->divide(10, 0);
+```
+
+> 测试用例应该尽可能全的覆盖所有使用场景，尤其是边界情况。
+
+然后可以对不同的使用场景进行断言：
+
+```php
+$calculator = new Calculator();
+$result = $calculator->divide(10, 2);
+$this->assertEquals(5.00, $result);
+$result = $calculator->divide(10, 3);
+$this->assertEquals(3.33, $result);
+$result = $calculator->divide(10, 0);
+$this->assertEquals(0.00, $result);
+```
+
+为了可读性和可维护性，可以按照场景分离测试用例到不同方法。
+
+PHPUnit 默认将所有 `test` 前缀方法视作测试用例，除了方法名前缀外，还可以这样通过注解（`@test`）表明该方法是测试方法。
+
+```php
+	/** @test */
+    public function it_should_return_zero_when_the_divider_is_zero()
+    {
+        $calculator = new Calculator();
+
+        $this->assertEquals(0.00, $calculator->divide(10, 0));
+    }
+```
+
+通过方法名可以直观感知这个方法是测试什么功能什么场景的。
+
+> 好的测试应该读起来像类/方法的文档一样。
+
+此时，`Calculator` 类还不存在，所以测试结果是红色的（测试不通过）：
+
+![](images/image-20240429161527140.png)
+
+#### The green
+
+要让测试用例的运行结果变绿（测试通过），需要编写 `Calculator` 类及对应的 `divide` 方法。
+
+```php
+namespace App\Math;
+
+class Calculator
+{
+    public function divide(float $n1, float $n2): float
+    {
+        if ($n2 == 0) {
+            return 0;
+        }
+        return round($n1 / $n2, 2);
+    }
+}
+```
+
+### The refactor
+
+测试用例全部通过，表明计算器的除法功能是可以正常工作的，接下来，我们还可以在测试用例的保护下，进一步优化代码：
+
+```php
+namespace App\Math;
+
+use DivisionByZeroError;
+
+class Calculator 
+{
+    public function divide(float $n1, float $n2): float
+    {
+        try {
+            return round($n1 / $n2, 2);
+        } catch (DivisionByZeroError) {
+            return 0;
+        }
+    }
+}
+```
+
+运行测试用例仍然是绿色的。
+
+
+
+完成了一个最小的 TDD 闭环。
+
+TDD 虽然一开始要编写额外的测试用例，看起来多花了点时间，但是对于后续代码测试、验收、迭代、维护来说，是利大于弊的，是代码质量的重要保障（想想没有测试用例的情况下，后续代码功能越堆越多，每次回归测试的痛苦吧，而且很容易因为漏掉某个测试场景导致代码上线后出问题），而如果你从功能设计角度来写测试用例的话，真的是磨刀不误砍柴工，这绝对是一个正向循环，不会让代码陷入难以测试、难以维护、难以保障质量的泥潭：
+
+![](images/image-20221120003420441.png)
+
+TDD总结：
+
+- 当你为一个不存在的类/方法编写测试用例时，你就是在为这个类/方法设计使用规范（是测试，也是设计）
+- 测试用例应该读起来像文档/规范说明一样（可读性要好）
+- 在 red-green-refator 正向循环中，同一时间只带一顶帽子：
+  - Red：指定接口应该怎么调用，以及预期行为是什么（使用指南）
+  - Green: 编写可以正常工作的代码（let it done）
+  - Refactor: 这个时候，可以引入设计模式、创建工厂方法、删除重复代码在测试保护下对代码进行优化重构（let it better）
+
+
+
+
 
 
 

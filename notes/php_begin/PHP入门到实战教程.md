@@ -211,6 +211,78 @@ if (empty($_SERVER['PHP_AUTH_USER'])) {
 
 https://github.com/nonfu/master-laravel-code/tree/master/practice/blog
 
+
+
+### PHP 命名空间与类自动加载实现
+
+对于类文件的引入，反复编写 `require_once`/`include_once` 语句太麻烦，可以借助 [spl_auto_register](https://www.php.net/manual/zh/function.spl-autoload-register.php) 函数注册自动加载器，实现系统**未定义类或接口的自动加载**。
+
+比如我们将上述 `bootstrap.php` 中的通过 `require_once` 引入 `Container` 类代码调整为通过 `spl_autoload_register` 函数自动注册：
+
+```php
+spl_autoload_register(function ($className) {
+    require_once 'core/' . $className. '.php';
+});
+```
+
+这样，我们只需要通过 `spl_autoload_register` 全局注册这个匿名函数即可，当 `Container` 类找不到时，会根据这个自动加载器进行加载。
+
+#### 命名空间及其使用
+
+`spl_autoload_register` 这种自动类加载机制存在一个问题，那就是不同库/组件类名冲突问题，因此，从 PHP 5.3 开始，引入了命名空间的概念，通过命名空间，可以很好的解决这个问题，而且相较于前者，代码可读性更好。
+
+可以借助 `spl_autoload_register` 函数，将类名所属命名空间解析为对应的目录路径（这就是为什么要根据目录来组织命名空间），然后把通过 `require_once`/`include_once` 引入：
+
+```php
+<?php
+namespace App;
+use App\testing\Test as SubTest;
+
+spl_autoload_register(function ($className) {
+    $path = explode('\\', $className);
+    if ($path[0] == 'App') {
+        $base = __DIR__;
+    }
+    $filename = $path[count($path) - 1] . '.php';
+    $filePath = $base;
+    foreach ($path as $key => $val) {
+        if ($key == 0 || $key == count($path) - 1) {
+            continue;
+        }
+        $filePath .= DIRECTORY_SEPARATOR . strtolower($val);
+    }
+    $filePath .= DIRECTORY_SEPARATOR . $filename;
+    require_once $filePath;
+});
+
+Test::print();
+SubTest::print();
+```
+
+
+
+#### 通过 Composer 管理命名空间
+
+实际项目开发时，手动编写这段 `spl_autoload_register` 代码有点麻烦，尤其是项目除了自己编写的代码外，还要引入各种第三方库。
+
+可以借助 PHP 的包管理工具 [Composer](https://getcomposer.org/) 帮我们管理这种**命名空间与目录路径的映射**。
+
+```
+vendor/autoload.php   ->   autoload_real.php  ->  vendor/composer/autoload_static.php
+```
+
+`autoload_php` 是所有 Composer 管理类自动加载的入口文件，所以我们只需要在代码中引入这个文件即可通过 Composer 来管理所有类的自动加载。
+
+![](images/image-15923185945419.jpg)
+
+> 实际上，Composer 底层也是通过 `spl_autoload_register` 函数实现类的自动加载的，只是在此之前，还会建立命令空间与类脚本路径的映射。
+
+
+
+
+
+
+
 在 `composer.json` 中配置需要维护命名空间路径映射的目录：
 
 ```json

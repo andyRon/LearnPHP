@@ -6,6 +6,11 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Container\Container as IlluminateContainer;
 
+/**
+ * 项目初始化函数
+ * @param Container $container
+ * @return Container
+ */
 function bootApp(Container $container)
 {
     initConfig($container);

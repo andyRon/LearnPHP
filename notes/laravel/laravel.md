@@ -1045,11 +1045,13 @@ php artisan breeze:install
 
 https://laravelacademy.org/books/test-driven-apis-with-laravel
 
-简单的薪资系统CRM
+
 
 ## 理论基础篇
 
 ### TDD 基本流程
+
+> Code: TDDDemo
 
 > **测试驱动开发**（英语：Test-driven development，缩写为TDD）是一种软件开发过程中的应用方法，由[极限编程](https://zh.m.wikipedia.org/wiki/极限编程)中倡导，以其倡导先写测试程序，然后编码实现其功能得名。测试驱动开发始于20世纪90年代。测试驱动开发的目的是取得**快速反馈**并使用“illustrate the main line”方法来构建程序。
 >
@@ -1128,7 +1130,7 @@ class Calculator
 }
 ```
 
-### The refactor
+#### The refactor
 
 测试用例全部通过，表明计算器的除法功能是可以正常工作的，接下来，我们还可以在测试用例的保护下，进一步优化代码：
 
@@ -1168,6 +1170,670 @@ TDD总结：
   - Red：指定接口应该怎么调用，以及预期行为是什么（使用指南）
   - Green: 编写可以正常工作的代码（let it done）
   - Refactor: 这个时候，可以引入设计模式、创建工厂方法、删除重复代码在测试保护下对代码进行优化重构（let it better）
+
+
+
+### REST API
+
+对于增删改这些需要对请求进行认证的接口，如果在未认证情况下，会返回 401 状态码：
+
+- 401 - Unauthorized 表示用户需要认证
+
+而对于删除和更新操作而言，不仅要认证，还要做权限校验，如果没有权限，通常返回 403 状态码：
+
+- 403 - Forbidden，表示无权访问该接口
+
+#### PUT vs. PATCH
+
+- PATCH 方法用于资源部分更新的场景，因此在请求数据中，指定的是**部分**属性数据；
+- PUT 方法用于资源整体替换的场景，因此在请求数据中，需要指定**所有**属性的数据。
+
+其他的不同点：
+
+- 一个成功的 `PUT` 请求响应 Body 应该是空的，即 204 响应。因为客户端已经把所有属性数据提交给更新接口了，所以不需要返回任何实体内容。
+- 而一个成功的 `PATCH` 请求则应该包含响应 Body，因为服务端可能会基于客户端提交的属性数据做一些计算和调整。
+- `PUT` 请求应该是幂等的， 这意味我们可以编写批处理脚本发起对同一个接口同一行数据的多次 PUT 请求，而不会有任何副作用。
+- `PATCH` 请求则不一定是幂等的。
+
+#### 嵌套资源
+
+可以在 API 路径中使用嵌套资源来代替查询字符串。
+
+以文章系统为例，要获取某篇文章下的所有评论，按照正常逻辑：
+
+```
+GET /api/v1/comments?post_id={id}
+```
+
+REST 风格的 API 设计，可以这么做：
+
+```
+GET /api/v1/posts/{post}/comments
+```
+
+这样，无论从 API 接口的语义性、可读性和可维护性来说，后者都要优于前者：
+
+- 语义性：评论依附于文章才有意义，脱离了具体的文章，评论就会变成不知所云；
+- 可读性：第二种方式可以很直观的看出来要获取指定文章的所有评论，对于第一种方式，在接口定义的时候没有查询字符串的情况下，我们很难预判这个接口是干嘛的；
+- 可维护性：查询字符串的方式就是个大杂烩，你永远不知道查询字符串会包含哪些条件，相应的，后续维护成本也很高。
+
+
+
+### 从API Resource开始
+
+REST API 是针对资源型 API 路由风格的约定，并结合 HTTP 请求方法、响应状态码对 API 从语义上有完整的规约；还有另一个重要的部分需要补充，那就是接口响应的**==数据格式==**，REST API 一般使用 JSON 作为响应数据格式，因此我们通常所说的 REST API，从接口规约完整性上说应该是 **REST + JSON API**。
+
+显然，接口响应数据格式要比接口路由风格要复杂的多，即便是 JSON API，不同开发人员编写的接口返回数据格式可能也是五花八门的，这个多样性主要体现在以下几个方面（从数据结构、命名风格、代码规范几个维护）：
+
+- 资源主体数据结构不同
+- 资源主体关联的嵌套资源引入方式不同：
+  - 有些和资源主体属性一起作为平级包含在 `attributes` 字段中
+  - 有些包含在单独的 `relations` 字段中
+  - 有些干脆不包含在资源接口返回结果中，需要通过额外的 endpoint 去访问
+- 一些 API 字段命名风格使用驼峰，另一些则使用蛇形（小写+下划线）
+- 排序和过滤没有设定统一规范，不同开发人员按照个人喜好编写代码
+
+既然存在这么多风格和不确定性，作为一个大型项目工程来说，就势必要做 **JSON数据格式进行统一和标准化**，不然调用 API 的前端或者外部开发人员将无所适从。
+
+#### API Resource
+
+> [andyRon/APIDemo (github.com)](https://github.com/andyRon/APIDemo)   v1
+
+Laravel官方提供的 [API Resource](https://laravel.com/docs/9.x/eloquent-resources) 特性，对 HTTP 响应的模型数据进行数据格式统一，最后以 JSON 格式返回。
+
+##### 模型和数据初始化
+
+新建项目演示JSON API的数据格式定义：
+
+```
+laravel new APIDemo
+```
+
+创建文章、评论模型及关联的迁移文件：
+
+```sh
+php artisan make:model Post -m
+php artisan make:model Comment -m
+```
+
+
+
+在 `.env` 中配置数据库连接（默认sqlite不需要配置），运行迁移：
+
+```sh
+php artisan migrate
+```
+
+
+
+创建数据填充工厂：
+
+```sh
+ php artisan make:factory PostFactory --model=Post
+ php artisan make:factory CommentFactory --model=Comment
+```
+
+
+
+然后在 `DatabaseSeeder` 中编排这些模型工厂：
+
+```php
+class DatabaseSeeder extends Seeder
+{
+    public function run(): void
+    {
+        User::factory(10)->create();
+
+        Post::factory(1000)->create(['is_draft' => Post::STATUS_DRAFT]);
+        Comment::factory(10000)->create();
+    }
+}
+```
+
+运行数据填充器
+
+```sh
+php artisan db:seed
+```
+
+##### API Resource 基本使用
+
+创建 `Post` 模型对应的资源类：
+
+```sh
+php artisan make:resource PostResource
+```
+
+添加路由：
+
+```php
+Route::get('posts/{post}', function (Request $req, Post $post) {
+    return new PostResource($post);
+});
+```
+
+启动项目测试：
+
+![](images/image-20240430131320378.png)
+
+##### 关联嵌套资源
+
+要先在 `Post` 模型类中定义对应的关联方法：
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Post extends Model
+{
+    use HasFactory;
+
+    const STATUS_DRAFT = 1;
+    const STATUS_PUBLISHED = 0;
+
+    public function author()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
+}
+```
+
+返回关联资源的话，需要在获取模型时定义要加载的关联关系：
+
+```php
+return new PostResource($post->load(['author', 'comments']));
+```
+
+![](images/image-20240430131809918.png)
+
+可以看到，API Resource 默认是将关联的嵌套资源以和资源属性平级的方式平铺在返回的 JSON 数据结构里的。
+
+##### 自定义 JSON 数据结构
+
+可以在生成的资源类中重写 `toArray` 方法类定义要返回的数据结构和对应的数据转化：
+
+```php
+class PostResource extends JsonResource
+{
+    /**
+     * Transform the resource into an array.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+//        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'title' => $this->title,
+            'slug' => $this->slug,
+            'content' => $this->content,
+            'views' => $this->views,
+            'created_at' => $this->created_at->toDateTimeString(),
+            'updated_at' => $this->updated_at->toDateTimeString(),
+            'relations' => [
+              'author' => $this->author,
+              'comments' => $this->comments
+            ]
+        ];
+    }
+}
+```
+
+不过也要注意这种自有带来的潜在风险：不同开发人员又可以按照自己的喜好写出五花八门的 JSON 数据结构，所以我们需要有一套机制统一 JSON 响应的数据结构。
+
+> 除了单个资源外，API Resource 还支持[资源集合类](https://learnku.com/docs/laravel/10.x/eloquent-resources/14892#resource-collections)。
+
+##### API Resource 的不足
+
+API Resource 是 Laravel 官方提供的一套开箱即用的、非常入门级的 JSON API 响应数据结构标准化机制，一旦项目变得复杂，有更多定制化的需求，使用成本就会变高，需要更多编码和规范工作来确保数据标准的统一，比如上面提到的嵌套资源到底放在哪里的问题，它也没有更多的规约来告诉我们嵌套的关联资源如果想独立获取要怎么做，以及过滤器和排序这些更高阶的 JSON API 请求要怎么统一标准化设置。
+
+还有一个更大的局限是 API Resource 只是 Laravel 提供的一个功能特性，如果我们的开发团队使用了 Laravel 框架以外的其他语言或者框架，要怎么统一标准化 JSON API 响应的数据结构呢？
+
+显然，我们需要一个更广义、更开放的 JSON API 规范，来满足更多场景、更多技术栈的响应数据标准化，好在，社区已经有了这样的规范和标准，那就是接下来要介绍的主角 —— **JSON API** 。
+
+
+
+#### JSON API规范
+
+[json-api/json-api](https://github.com/json-api/json-api)
+
+> 有关 JSON API 的细节，可以参考官方文档：http://jsonapi.org.cn/format/，里面包含了规范的所有明细，并且 JSON API 也是和 REST API 规范相呼应的。JSON API 已经在 IANA 机构完成注册，它的 MIME 类型是 [`application/vnd.api+json`](http://www.iana.org/assignments/media-types/application/vnd.api+json)。
+
+按照JSON API规范的要求，一个标准的 JSON 响应数据结构应该是下面这样子的：
+
+```json
+{
+    "data": [
+        {
+            "type": "posts",
+            "id": 1,
+            "attributes": {
+                "title": "JSON:API paints my bikeshed!",
+                "content": "This is the body of the article",
+                "views": 2
+            },
+            "relationships": {
+                "author": {
+                    "links": {
+                        "self": "http://example.com/posts/1/relationships/author",
+                        "related": "http://example.com/posts/1/author"
+                    }
+                },
+                "comments": {
+                    "links": {
+                        "self": "http://example.com/posts/1/relationships/comments",
+                        "related": "http://example.com/posts/1/comments"
+                    },
+                    "data": [
+                        {
+                            "type": "comments",
+                            "id": "5"
+                        },
+                        {
+                            "type": "comments",
+                            "id": "12"
+                        }
+                    ]
+                }
+            },
+            "links": {
+                "self": "http://example.com/posts/1"
+            }
+        }
+    ],
+    "included": [
+        {
+            "type": "users",
+            "id": "9",
+            "attributes": {
+                "name": "Test"
+            },
+            "links": {
+                "self": "http://example.com/users/9"
+            }
+        },
+        {
+            "type": "comments",
+            "id": "5",
+            "attributes": {
+                "content": "Go!"
+            },
+            "relationships": {
+                "author": {
+                    "data": {
+                        "type": "users",
+                        "id": "2"
+                    }
+                }
+            },
+            "links": {
+                "self": "http://example.com/comments/5"
+            }
+        },
+        {
+            "type": "comments",
+            "id": "12",
+            "attributes": {
+                "content": "I like PHP better"
+            },
+            "relationships": {
+                "author": {
+                    "data": {
+                        "type": "users",
+                        "id": "9"
+                    }
+                }
+            },
+            "links": {
+                "self": "http://example.com/comments/12"
+            }
+        }
+    ]
+}
+```
+
+
+
+主要包含以下几个部分：
+
+##### Identification
+
+资源主体的标识，包括 `id` 和 `type`，这是必须的基础字段，不能为空（一般由实现规范的框架自行生成，无需开发人员设置）：
+
+```json
+{
+    "id": 1,
+    "type": "posts"
+}
+```
+
+##### Attributes
+
+资源主体的属性，这里面的属性字段由开发人员按照业务需要进行设置：
+
+```json
+{
+    "attributes": {
+        "title": "JSON:API paints my bikeshed!",
+        "content": "This is the body of the article",
+        "views": 2
+    }
+}
+```
+
+##### Relationships
+
+资源主体关联的嵌套资源，以文章为例，关联的是用户和评论，这里需要注意的是两者也有不同，对于多对一的归属关联，如 `author`，提供的是对应资源的获取链接 `links`，而对于一对多的包含关联，如 `comments`，返回的除了获取链接外，还有包含关联资源主体标识的 `data`（多个关联资源以数组形式提供），所有关联资源的细节信息在资源主体数据 `data` 之外的 `included` 里面，客户端在请求 API 时可以通过 `include` 条件按需获取想要加载的关联关系，以提供接口响应速度：
+
+```json
+{
+    "relationships": {
+        "author": {
+            "links": {
+                "self": "http://example.com/articles/1/relationships/author",
+                "related": "http://example.com/articles/1/author"
+            }
+        },
+         "comments": {
+             "links": {
+                 "self": "http://example.com/posts/1/relationships/comments",
+                 "related": "http://example.com/posts/1/comments"
+             },
+             "data": [
+                 {
+                     "type": "comments",
+                     "id": "5"
+                 },
+                 ...
+             ]
+         }
+    },
+    "included": [
+         {
+            "type": "users",
+            "id": "9",
+            "attributes": {
+                "name": "Test"
+            },
+            "links": {
+                "self": "http://example.com/users/9"
+            }
+        },
+        {
+            "type": "comments",
+            "id": "5",
+            "attributes": {
+                "content": "Go!"
+            },
+            "relationships": {
+                "author": {
+                    "data": {
+                        "type": "users",
+                        "id": "2"
+                    }
+                }
+            },
+            "links": {
+                "self": "http://example.com/comments/5"
+            }
+        },
+        ...
+    ]
+}
+```
+
+##### 分页、排序和过滤
+
+除了对关联嵌套资源加载的规范，JSON API 还对分页、排序和字段过滤有一套规范，这些可以放到后面具体演示的时候给大家展示。在 JSON API 规范下，我们可以通过请求参数来定制响应结果包含的数据，这就非常灵活了：
+
+```sh
+# 通过 views 排序（升序）
+GET /posts?sort=views
+
+# 通过 views 排序（降序）
+GET /posts?sort=-views
+
+# 筛选 title=laravel 的所有数据
+GET /posts?filter[title]=laravel
+
+# 通过作者名字进行筛选
+GET /posts?filter[author.name]=taylor
+
+# 包含指定的关联关系（author、comments）
+GET /posts?include=author,comments
+
+# posts 资源只返回 title、content 属性
+GET /posts?fields[posts]=title,content
+
+# 包含 author 关联并且 posts 资源只返回 title、content 字段，author 只返回 name 字段
+GET /posts?include=author&fields[posts]=title,content&fields[author]=name
+```
+
+这些都是 API Resource 无法满足的，当然对后端接口开发也提出了更高的要求，好在这些规范既然是开放的规范标准，就必然有很多第三方的实现框架/组件。
+
+接下来的两篇教程，就是 Laravel 框架里面针对 JSON API 规范实现的几个常用扩展包，借助这些扩展包，我们就可以编写统一标准的、更加强大的、又不失灵活的 Laravel API 了。
+
+
+
+### JSON:API Resource 
+
+> code：[andyRon/APIDemo (github.com)](https://github.com/andyRon/APIDemo) v2
+
+常用的第三方JSON API实现扩展包：[timacdonald/json-api](https://github.com/timacdonald/json-api)，它与 Laravel 自带的 API Resource无缝集成。
+
+
+
+
+
+🔖 版本兼容性问题,timacdonald/json-api没法兼容新版本的laravel。
+
+下面安装了beta版解决了，这一节就不做了
+
+
+
+
+
+### Laravel Query Builder
+
+在JSON API这个领域，除了上篇的 JSON:API Resource，Laravel领域比较知名的还有 [Laravel Query Builder](https://spatie.be/docs/laravel-query-builder/v5/introduction) 以及 [Laravel JSON:API](https://github.com/laravel-json-api/laravel)。
+
+前者是声名在外的 Spatie 作品，它不仅仅满足构建 JSON API 的需求，还是一个 Eloquent Query Builder，完全兼容 Laravel 自带的 Eloquent 构建器，同时尽可能遵循 JSON API 规范设计查询范式，功能非常强大，如果说 JSON:API Resource 是针对 Laravel API Resource 进行扩展，那么 Laravel Query Builder 就是针对 Laravel Eloquent Builder 进行扩展，在更底层的维度提供更全面的定制化功能，同时还能保留原有的 Eloquent 查询能力，两者结合起来，就可以实现非常完备的 JSON API。
+
+Laravel JSON:API 扩展包则是自立门户，完全遵循 JSON API 规范实现了一套独立的 API 请求、处理、响应体系，显然，这个扩展包对老项目的迁移很不友好，不是像 JSON:API Resource 和 Laravel Query Builder 那样在 Laravel 自带功能上进行扩展，从工程角度提供的灵活性和友好度也就更低（大多数项目都有历史沉疴），除非你是从头开始新项目，饶是如此，Laravel JSON:API 对原有的 Laravel 代码结构侵入也很大，又给后续框架升级带来困扰，所以不太推荐。
+
+下面通过 Laravel Query Builder + JSON:API Resource 构建符合 JSON API 规范的接口。
+
+> code：[andyRon/APIDemo (github.com)](https://github.com/andyRon/APIDemo) v3
+
+> 之所以要采用两个扩展包，而不是一个，还是因为实际项目大多数一开始并没有想那么多，为了快速开始都是轻装上线，只有极少部分才能发展成为大型项目，需要对 API 接口就进行治理和维护，而 Laravel Query Builder 和 JSON:API Resource 对现有代码侵入低就成了巨大的优势，会极大降低开发和维护成本。另外，从 Unix 设计哲学来看，也没什么问题，每个功能模块完成最小职责，然后通过管道组合来实现复杂功能，这对面向未来的扩展性和设计来说都是非常有利的。
+
+#### 使用入门
+
+```sh
+composer require spatie/laravel-query-builder
+```
+
+如果你想要通过配置文件对这个扩展包进行自定义配置，可以发布配置文件到 config 目录下：
+
+```
+php artisan vendor:publish --provider="Spatie\QueryBuilder\QueryBuilderServiceProvider" --tag="query-builder-config"
+```
+
+
+
+Laravel Query Builder 作为默认 Eloquent 查询构建器适配 JSON API 的适配器，比起 JSON:API Resource 适配器有着更加简单的调用方式，不用修改 API 资源类，也不用修改模型类，只需要通过 `Spatie\QueryBuilder\QueryBuilder::for` 方法把指定模型类注入Laravel Query Builder，然后后续的查询都会基于这个新的扩展查询构建器，而不是默认的，如果扩展查询构建器没有对应的方法，则通过魔术函数 `__call` 回到 Laravel 默认的 Eloquent 查询构建器查询：`QueryBuilder` 🔖
+
+![](images/image-20221212105707758.png)
+
+这样通过适配器的方式对原有 Laravel 项目代码没有任何侵入，设计非常巧妙:
+
+```php
+Route::get('posts/{id}', function (Request $request, int $id) {
+    return QueryBuilder::for(Post::where('id', $id))
+        ->allowedFields(['id', 'title', 'slug', 'content', 'views', 'created_at', 'updated_at'])
+        ->get();
+});
+```
+
+Laravel Query Builder 把结果包含字段都统一通过查询方法 `allowedFields` 提供，更加简单高效，只是这个时候，如果想要对属性做格式转化，可以在模型类中完成（考虑到日期属性会在多处被使用，而不仅仅是 HTTP 响应，在模型类中完成格式转化代码复用性会更好）：
+
+```php
+protected $casts = [
+    'created_at' => 'datetime:Y-m-d H:i:s',
+    'updated_at' => 'datetime:Y-m-d H:i:s',
+];
+```
+
+![](images/image-20240430173427007.png)
+
+#### 指定字段
+
+不过，结果并没有按照 `allowedFields` 指定的字段返回，这是因为该方法只是定义了通过查询字符串指定字段的允许范围，不是定义去数据库查询的字段，要配合查询字符串 `fields` 指定字段才能实现完整功能（不指定返回所有字段）：
+
+```
+http://localhost:8000/posts/1?fields[posts]=id,title,slug,content,views,created_at
+```
+
+#### 珠联璧合
+
+有些同学可能会困惑，这 Laravel Query Builder 返回的也并不是 JSON API 规范的响应数据啊，这是因为 Laravel Query Builder 更多还是从请求处理参数的角度兼容 JSON API 规范，更专注于查询构建器的逻辑，而不是响应数据格式，这一点从名称上也可以看出来，如果想要让想要响应结果和 JSON API 规范一致，需要将 JSON:API Resource 和 Laravel Query Builder 结合起来使用，这其实是一种**管道模式的思维** —— 每个功能模块实现单一职责，然后通过管道方式将不同模块组合起来实现更复杂的功能。
+
+```
+composer require timacdonald/json-api:'v1.*'
+
+// 修改composer.json 的    "minimum-stability": "beta", 才能安装beta版
+```
+
+```php
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Tests\Resources\CommentResource;
+use Tests\Resources\UserResource;
+use TiMacDonald\JsonApi\JsonApiResource;
+use TiMacDonald\JsonApi\Link;
+
+class PostResource extends JsonApiResource
+{
+    public function toAttributes(Request $request)
+    {
+        return Arr::except($this->resource->toArray(), 'id');
+    }
+    public function toRelationships(Request $request)
+    {
+        return [
+            'author' => fn() => new UserResource($this->author),
+            'comments' => fn() => CommentResource::collection($this->comments),
+        ];
+    }
+    public function toLinks(Request $request)
+    {
+        return [
+            Link::self(route('test.show', $this->resource)),
+        ];
+    }
+}
+```
+
+调整路由返回响应代码：
+
+```php
+Route::get('posts/{id}', function (Request $request, int $id) {
+    $post =  QueryBuilder::for(Post::where('id', $id))
+        ->allowedFields(['id', 'title', 'slug', 'content', 'views', 'created_at', 'updated_at'])
+        ->first();
+    return new PostResource($post);
+});
+```
+
+![](images/image-20240430180344042.png)
+
+Laravel Query Builder 负责对 JSON API 请求参数进行处理，组合 Laravel 查询构建器对数据库进行查询，最后将查询结果通过 JSON:API Resource 返回，从而完成 JSON API 规范的完整功能。
+
+#### 关联查询
+
+
+
+#### 过滤
+
+```
+http://localhost:8000/posts?fields[posts]=id,title,views,created_at&filter[title]=accusantium
+```
+
+
+
+#### 排序
+
+
+
+```
+http://localhost:8000/posts?fields[posts]=id,title,views,created_at&filter[title]=accusantium&sort=-views,-created_at
+```
+
+
+
+#### 分页
+
+
+
+#### API 版本
+
+JSON API 并没有对版本有特别规范说明，使用 Laravel 自带的路由前缀来区分不同版本 API 即可：
+
+```php
+public function boot()
+{
+    $this->configureRateLimiting();
+    
+    $this->routes(function () {
+        Route::prefix('api/v1')
+            ->middleware(['api', 'auth:sanctum'])
+            ->group(base_path('routes/v1.php'));
+    });
+}
+```
+
+
+
+### 小结
+
+总结下 **API 开发的一些最佳实践**：
+
+- 编写可读的 RESTful API
+- 无论何时，在控制器中使用嵌套的方法嵌套关联资源（比如 `posts/{post}/comments`）
+- 使用 HTTP 状态码让 API 语义性更强（比如异步接口不返回 200 而是 202 以及一个回调 URL，表示请求已收到，但在处理中，客户端可以通过返回的 URL 查询处理状态）
+- 永远不要对外暴露自增 ID！以免产生安全隐患，如何解决这个问题：
+  - 数据库中保留自增 ID 字段，以利于 SQL 优化
+  - 同时每个模型有 UUID 字段，对外只暴露 UUID
+- 版本化 API，尤其是对外开放的 API，并且尽可能做到向前兼容
+- 让客户端决定想要什么资源：
+  - 加载关联关系
+  - 过滤筛选
+  - 排序逻辑
+  - 指定返回的字段子集
+- **标准化**以上事项，这样在每个项目里就可以统一标准，我们可以使用 **REST + JSON API** 规范以底层组件方式完成这个标准化
+- 响应数据也要具备可读性，让客户端易于理解：
+  - 和 JavaScript 客户端约定好命名规范
+  - 通过嵌套来凝聚统一领域的数据
+
+
+
+## 编码实战篇
+
+
 
 
 

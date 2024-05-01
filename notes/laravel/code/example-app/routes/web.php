@@ -203,3 +203,7 @@ Route::get('test_artisan', function () {
 
 
 Route::get('user/show', [UserController::class, 'show']);
+
+Route::fallback(function () {
+    return '其它路由';
+});

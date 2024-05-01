@@ -8,6 +8,8 @@
 
 https://learnku.com/docs/laravel/10.x
 
+https://learnku.com/laravel/wikis
+
 `example-app`学习Laravel时的项目
 
 ## 1 前言
@@ -335,7 +337,7 @@ Web 服务器将所有请求指向应用程序的 public/index.php 文件。永�
 
 ## 3 核心架构
 
-### 请求周期 
+### 3.1 请求周期 
 
 1. web 服务器（Apache/Nginx）配置定向
 
@@ -359,29 +361,239 @@ HTTP 内核还定义了一个 **HTTP中间件列表**，所有请求在被应用
 
 
 
-### 服务容器
+### 3.2 服务容器
+
+Laravel服务容器是一个用于==管理类依赖以及实现依赖注入==的强有力工具。依赖注入这个名词表面看起来花哨，实质上是指：**通过构造函数，或者某些情况下通过「setter」方法将类依赖「注入」到类中。**
 
 
 
-### 服务提供者
+#### 绑定
+
+##### 基础绑定
+
+- 简单绑定
+
+几乎所有的服务容器绑定都会在服务提供者中注册。
+
+在服务提供者中，你总是可以通过 $this->app 属性访问容器。我们可以使用 bind 方法注册一个绑定，将我们希望注册的类或接口名称与返回类实例的闭包一起传递:
+
+```php
+use App\Services\Transistor;
+use App\Services\PodcastParser;
+use Illuminate\Contracts\Foundation\Application;
+
+$this->app->bind(Transistor::class, function (Application $app) {
+    return new Transistor($app->make(PodcastParser::class));
+});
+```
+
+- 单例的绑定
+
+`singleton` 方法将类或接口绑定到只应解析一次的容器中。解析单例绑定后，后续调用容器时将返回相同的对象实例：
+
+```php
+use App\Services\Transistor;
+use App\Services\PodcastParser;
+use Illuminate\Contracts\Foundation\Application;
+
+$this->app->singleton(Transistor::class, function (Application $app) {
+    return new Transistor($app->make(PodcastParser::class));
+});
+```
+
+- 绑定作用域单例
+
+`scoped` 方法将一个类或接口绑定到容器中，该容器只应在给定的 Laravel 请求 / 作业生命周期内解析一次。虽然该方法与 singleton 方法类似，但是当 Laravel 应用程序开始一个新的「生命周期」时， 使用 scoped 方法注册的实例 将被刷新。
+
+
+
+- 绑定实例
+
+`instance`
+
+
+
+##### 将接口绑定实例
+
+
+
+##### 上下文绑定
+
+所谓「上下文绑定」就是根据上下文进行动态的绑定，指依赖的上下文关系。
+
+
+
+##### 绑定原语
+
+
+
+##### 绑定变长参数类型 🔖
+
+
+
+变长参数的关联标签
+
+##### 标签
+
+```php
+$this->app->tag([CpuReport::class, MemoryReport::class], 'reports');
+```
+
+```php
+$this->app->bind(ReportAnalyzer::class, function (Application $app) {
+    return new ReportAnalyzer($app->tagged('reports'));
+});
+```
+
+##### 继承绑定
+
+extend 方法允许修改已解析的服务。例如，解析服务时，可以运行其他代码来修饰或配置服务。extend 方法接受闭包，该闭包应返回修改后的服务作为其唯一参数。闭包接收正在解析的服务和容器实例：
+
+```php
+$this->app->extend(Service::class, function (Service $service, Application $app) {
+    return new DecoratedService($service);
+});
+```
+
+
+
+#### 解析
+
+##### make方法
+
+
+
+##### 自动注入
+
+
+
+#### 方法调用和注入
+
+
+
+
+
+#### 容器事件
+
+服务容器每次解析对象时都会触发一个事件。你可以使用 `resolving` 方法监听此事件：
+
+```php
+use App\Services\Transistor;
+use Illuminate\Contracts\Foundation\Application;
+
+$this->app->resolving(Transistor::class, function (Transistor $transistor, Application $app) {
+    // 当容器解析「Transistor」类型的对象时调用...
+});
+
+$this->app->resolving(function (mixed $object, Application $app) {
+    // 当容器解析任何类型的对象时调用...
+});
+```
+
+
+
+#### PSR-11
+
+
+
+### 3.3 服务提供者
 
 `Illuminate\Support\ServiceProvider`
 
 服务提供者是所有 Laravel 应用程序的引导中心。你的应用程序，以及通过服务器引导的 Laravel 核心服务都是通过服务提供器引导。
 
+#### 编写服务提供者
+
+所有的服务提供者都会继承 `Illuminate\Support\ServiceProvider` 类。大多服务提供者都包含一个 register 和一个 boot 方法。
+
+```
+php artisan make:provider xxxxServiceProvider
+```
+
+##### 注册方法
 
 
-### Facades
 
-在整个 Laravel 文档中，你将看到通过 Facades 与 Laravel 特性交互的代码示例。Facades 为应用程序的服务容器中可用的类提供了「静态代理」。在 Laravel 这艘船上有许多 Facades，提供了几乎所有 Laravel 的特征。
-
-Laravel Facades 充当服务容器中底层类的「静态代理」，提供简洁、富有表现力的好处，同时保持比传统静态方法更多的可测试性和灵活性。
+##### 引导方法
 
 
 
-#### 辅助函数
+#### 注册服务提供者
+
+所有服务提供者都是通过配置文件 config/app.php 进行注册。该文件包含了一个列出所有服务提供者名字的 providers 数组，默认情况下，其中列出了所有核心服务提供者，这些服务提供者启动 Laravel 核心组件，比如邮件、队列、缓存等等。
+
+要注册提供器，只需要将其添加到数组。
+
+
+
+#### 延迟加载提供者
+
+如果你的服务提供者 只 在 服务容器中注册，可以选择延迟加载该绑定直到注册绑定的服务真的需要时再加载，延迟加载这样的一个提供者将会提升应用的性能，因为它不会在每次请求时都从文件系统加载。
+
+Laravel 编译并保存延迟服务提供者提供的所有服务的列表，以及其服务提供者类的名称。因此，只有当你在尝试解析其中一项服务时，Laravel 才会加载服务提供者。
+
+要延迟加载提供者，需要实现 `\Illuminate\Contracts\Support\DeferrableProvider` 接口并置一个 provides 方法。这个 provides 方法返回该提供者注册的服务容器绑定。
+
+
+
+
+
+### 3.4 Facades
+
+#### 简介
+
+在整个 Laravel 文档中，你将看到通过 Facades 与 Laravel 特性交互的代码示例。Facades 为应用程序的服务容器中可用的类提供了==「静态代理」==。**在Laravel这艘船上有许多 Facades，提供了几乎所有 Laravel 的特征**。
+
+Laravel Facades充当服务容器中底层类的「静态代理」，提供简洁、富有表现力的好处，同时保持比传统静态方法更多的**可测试性和灵活性**。
+
+Laravel 的所有 Facades 都在 `Illuminate\Support\Facades` 命名空间中定义。
+
+通过`@method static`声明静态方法，具体实现通过`Facade`的`__callStatic`方法：
+
+```php
+/**
+* @method static bool move(string $path, string $target)
+* ...
+*/
+class File extends Facade
+{
+    protected static function getFacadeAccessor()
+    {
+        return 'files';
+    }
+}
+
+abstract class Facade
+{
+    /**
+     * The application instance being facaded.
+     *
+     * @var \Illuminate\Contracts\Foundation\Application|null
+     */
+    protected static $app;
+  
+  	.....
+      
+    public static function __callStatic($method, $args)
+    {
+        $instance = static::getFacadeRoot();
+
+        if (! $instance) {
+            throw new RuntimeException('A facade root has not been set.');
+        }
+
+        return $instance->$method(...$args);
+    }
+}
+```
+
+
+
+##### 辅助函数
 
 [辅助函数文档](https://learnku.com/docs/laravel/10.x/helpers)
+
+为了补充 Facades，Laravel 提供了各种全局 「助手函数」，使它更容易与常见的 Laravel 功能进行交互。可以与之交互的一些常用助手函数有 view, response, url, config 等。
 
 
 
@@ -389,21 +601,343 @@ Laravel Facades 充当服务容器中底层类的「静态代理」，提供简�
 
 Facades 有很多好处。它们提供了简洁、易记的语法，让你可以使用 Laravel 的功能而不必记住必须手动注入或配置的长类名。此外，由于它们独特地使用了 PHP 的动态方法，因此它们易于测试。
 
+类的「作用域泄漏」
+
+##### Facades 与 依赖注入
+
+依赖注入的主要好处之一是**能够替换注入类的实现**。这在测试期间很有用，因为你可以注入一个模拟或存根并断言各种方法是否在存根上调用了。
+
+通常，真正的静态方法是不可能 mock 或 stub 的。无论如何，由于 Facades 使用动态方法对服务容器中解析出来的对象方法的调用进行了代理， 我们也可以像测试注入类实例一样测试 Facades。
+
+
+
+##### Facades Vs 助手函数
+
+
+
+🔖 测试
+
 
 
 #### Facades 工作原理
 
+Facade 基类使用 `__callStatic()` 魔术方法将来自 Facade 的调用推迟到从容器解析出对象后。
+
+例如调用了 Laravel 缓存系统 `Cache::get('user:'.$id)`，
+
+`Illuminate\Contracts\Cache\Factory`
 
 
 
-
-#### 实时 Facades
+#### 实时 Facades 🔖
 
 
 
 ## 4 基础功能
 
 ### 4.1 路由
+
+一个 URI 和一个闭包
+
+#### 1 基础路由
+
+##### 默认路由文件
+
+所有 Laravel 路由都定义在你的路由文件中，它位于 routes 目录。这些文件会被你的应用程序中的 `App\Providers\RouteServiceProvider` 自动加载。
+
+`routes/web.php` 文件用于定义 web 界面的路由。这些路由被分配给 web 中间件组，它提供了 会话状态和 CSRF 保护等功能。
+
+定义在 `routes/api.php` 中的路由都是无状态的，并且被分配了 api 中间件组。在这个路由组内，将自动应用 `/api` URI 前缀，所以你无需手动将其应用于文件中的每个路由。你可以通过修改 RouteServiceProvider 类来修改前缀和其他路由组选项。
+
+##### 可用的路由方法
+
+```php
+Route::get($uri, $callback);
+Route::post($uri, $callback);
+Route::put($uri, $callback);
+Route::patch($uri, $callback);
+Route::delete($uri, $callback);
+Route::options($uri, $callback);
+
+Route::match(['get', 'post'], '/', function () {
+    // ...
+});
+
+Route::any('/', function () {
+    // ...
+});
+```
+
+##### 依赖注入
+
+你可以在路由的回调方法中，以形参的方式声明路由所需要的任何依赖项。
+
+🔖
+
+##### CSRF 保护
+
+请记住，任何指向 POST、PUT、PATCH 或 DELETE 路由 (在 web 路由文件中定义) 的 HTML 表单都应该包含 CSRF 令牌字，否则请求会被拒绝。
+
+```html
+<form method="POST" action="/profile">
+    @csrf
+    ...
+</form>
+```
+
+##### 重定向路由
+
+`Route::redirect()`
+
+##### 视图路由
+
+如果你的路由只需返回一个视图，你可以使用 Route::view 方法。
+
+```php
+Route::view('/welcome', 'welcome');
+// 第三个参数数组中不能使用view、data, status 及 headers
+Route::view('/welcome', 'welcome', ['name' => 'Taylor']);
+```
+
+##### route:list 命令
+
+```sh
+php artisan route:list
+# 显示分配给路由的中间件信息
+php artisan route:list -v
+# 指定url开头
+php artisan route:list --path=api
+# 隐藏由第三方包定义的任何路由
+php artisan route:list --except-vendor
+#
+php artisan route:list --only-vendor
+```
+
+
+
+#### 2 路由参数
+
+##### 必需参数
+
+`{}`
+
+##### 必填参数
+
+
+
+##### 可选参数
+
+```php
+'/user/{name?}'
+```
+
+##### 正则表达式约束
+
+where 方法接受参数的名称和定义如何约束参数的正则表达式：
+
+```php
+Route::get('/user/{name}', function (string $name) {
+    // ...
+})->where('name', '[A-Za-z]+');
+
+Route::get('/user/{id}', function (string $id) {
+    // ...
+})->where('id', '[0-9]+');
+
+// 一些常用的正则表达式模式具有相关方法
+Route::get('/user/{id}/{name}', function (string $id, string $name) {
+    // ...
+})->whereNumber('id')->whereAlpha('name');
+
+Route::get('/user/{name}', function (string $name) {
+    // ...
+})->whereAlphaNumeric('name');
+
+Route::get('/user/{id}', function (string $id) {
+    // ...
+})->whereUuid('id');
+```
+
+##### 全局约束
+
+如果你希望路由参数始终受给定正则表达式的约束，你可以使用 pattern 方法。 你应该在 App\Providers\RouteServiceProvider 类的 boot 方法中定义这些模式：
+
+```php
+/**
+ * 定义路由模型绑定、模式筛选器等。
+ */
+public function boot(): void
+{
+    Route::pattern('id', '[0-9]+');
+}
+```
+
+一旦定义了模式，它就会自动应用到使用该参数名称的所有路由：
+
+```php
+Route::get('/user/{id}', function (string $id) {
+    // 仅当 {id} 是数字时执行。。。
+});
+```
+
+
+
+#### 3 命名路由
+
+通过将 name 方法链接到路由定义上，可以指定路由的名称：
+
+```php
+Route::get('/user/profile', function () {
+    // ...
+})->name('profile');
+```
+
+##### 生成命名路由的 URL
+
+一旦你为给定的路由分配了一个名字，你可以在通过 Laravel 的 route 和 redirect 辅助函数生成 URL 或重定向时使用该路由的名称：
+
+```php
+// 生成URL。。。
+$url = route('profile');
+
+// 生成重定向。。。
+return redirect()->route('profile');
+
+return to_route('profile');
+```
+
+如果命名路由定义了参数，你可以将参数作为第二个参数传递给 route 函数。 给定的参数将自动插入到生成的 URL 的正确位置：
+
+```php
+Route::get('/user/{id}/profile', function (string $id) {
+    // ...
+})->name('profile');
+
+$url = route('profile', ['id' => 1]);
+```
+
+如果你在数组中传递其他参数，这些键 / 值对将自动添加到生成的 URL 的查询字符串中：
+
+```php
+Route::get('/user/{id}/profile', function (string $id) {
+    // ...
+})->name('profile');
+
+$url = route('profile', ['id' => 1, 'photos' => 'yes']);
+
+// /user/1/profile?photos=yes
+```
+
+##### 检查当前路由
+
+如果你想确定当前请求是否路由到给定的命名路由，你可以在 Route 实例上使用 named 方法。 例如，你可以从路由中间件检查当前路由名称：
+
+```php
+public function handle(Request $request, Closure $next): Response
+{
+    if ($request->route()->named('profile')) {
+        // ...
+    }
+
+    return $next($request);
+}
+```
+
+
+
+#### 4 路由组
+
+路由组允许你共享路由属性，例如中间件，而无需在每个单独的路由上定义这些属性。
+
+嵌套组尝试智能地将属性与其父组 “合并”。中间件和 where 条件合并，同时附加名称和前缀。 URI 前缀中的命名空间分隔符和斜杠会在适当的地方自动添加。
+
+##### 路由中间件
+
+
+
+##### 控制器
+
+如果一组路由都使用相同的 控制器 , 你可以使用 controller 方法为组内的所有路由定义公共控制器。然后，在定义路由时，你只需要提供它们调用的控制器方法。
+
+##### 子域路由
+
+路由组也可以用来处理子域路由。子域可以像路由 uri 一样被分配路由参数，允许你捕获子域的一部分以便在路由或控制器中使用。子域可以在定义组之前调用 domain 方法来指定:
+
+```php
+Route::domain('{account}.example.com')->group(function () {
+    Route::get('user/{id}', function (string $account, string $id) {
+        // ...
+    });
+});
+```
+
+> 注意：为了确保子域路由是可以访问的，你应该在注册根域路由之前注册子域路由。这将防止根域路由覆盖具有相同 URI 路径的子域路由。
+
+##### 路由前缀
+
+prefix 方法可以用给定的 URI 为组中的每个路由做前缀。
+
+```php
+Route::prefix('admin')->group(function () {
+    Route::get('/users', function () {
+        // 对应 "/admin/users" 的 URL
+    });
+});
+```
+
+##### 路由名称前缀
+
+name 方法可以用给定字符串作为组中的每个路由名的前缀。
+
+```php
+Route::name('admin.')->group(function () {
+    Route::get('/users', function () {
+        // 被分配的路由名为："admin.users"
+    })->name('users');
+});
+```
+
+
+
+
+
+
+
+#### 5 路由模型绑定 🔖
+
+##### 隐式绑定
+
+
+
+##### 隐式枚举绑定
+
+
+
+##### 显式绑定
+
+
+
+#### 6 Fallback路由
+
+没有其他路由匹配传入请求时将执行的路由
+
+
+
+#### 7 速览限制
+
+
+
+#### 8 伪造表单方法
+
+
+
+#### 9 访问当前路由
+
+
+
+#### 10 跨域资源共享 (CORS)
+
+
 
 
 
@@ -1832,6 +2366,22 @@ public function boot()
 
 
 ## 编码实战篇
+
+ARPayroll
+
+
+
+
+
+
+
+# Swoole从入门到实战教程
+
+https://laravelacademy.org/books/swoole-tutorial
+
+
+
+
 
 
 

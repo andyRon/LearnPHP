@@ -1268,57 +1268,499 @@ Laravel 通过 Symfony Process 组件 提供了一个小而美的 API，让你�
 
 ## 6 安全相关
 
-### 用户认证
+### 6.1 用户认证
+
+#### 6.1.1 介绍
+
+Laravel 的身份验证工具的核心是由「看守器」和「提供器」组成的。 
+
+看守器定义如何对每个请求的用户进行身份验证。例如，Laravel 附带了一个 session 守卫，它使用 session 和 cookie 来维护状态。
+
+提供器定义如何从持久存储中检索用户。 Laravel 支持使用 Eloquent 和数据库查询构建器检索用户。不仅如此，你甚至可以根据应用程序的需要自由定制其他提供程序。
+
+应用程序的身份验证配置文件位于 config/auth.php. 这个文件包含几个记载了的选项，用于调整 Laravel 身份验证服务的行为。
+
+##### 入门套件
+
+[ Laravel 入门套件](https://learnku.com/docs/laravel/10.x/starter-kits/14839)
+
+##### 数据库注意事项
+
+🔖
+
+remember_token
+
+##### 生态系统概述
+
+###### Laravel内置的浏览器认证服务
+
+1️⃣ [Laravel Breeze](https://learnku.com/docs/laravel/10.x/starter-kits#laravel-breeze) 是 Laravel 所有身份验证功能的简单、最小实现，包括登录、注册、密码重置、电子邮件验证和密码确认。 Laravel Breeze 的视图层由简单的 Blade 模板 组成，样式为 Tailwind CSS。
+
+2️⃣ [Laravel Fortify](https://learnku.com/docs/laravel/10.x/fortify) 是 Laravel 的无 header 身份验证后端，它实现了本文档中的许多功能，包括基于 cookie 的身份验证以及其他功能，如双因素身份验证和电子邮件验证。Fortify 为 Laravel Jetstream 提供身份验证后端，或者可以单独与 Laravel Sanctum 结合使用，为需要使用 Laravel 进行身份验证的 SPA 提供身份验证。
+
+3️⃣ [Laravel Jetstream](https://jetstream.laravel.com/) 是一个强大的应用入门套件，它使用 Tailwind CSS，Livewire 和 / 或 Inertia 提供美观的现代 UI，同时集成和扩展了 Laravel Fortify 的认证服务。Laravel Jetstream 提供了双因素身份验证、团队支持、浏览器 session 管理、个人资料管理等功能，并内置了 Laravel Sanctum 的集成以支持 API 令牌身份验证。接下来我们将讨论 Laravel 的 API 身份验证产品。
+
+###### Laravel的API认证服务
+
+1️⃣ Passport 是一个 OAuth2 身份验证提供程序，提供各种 OAuth2 「授权类型」，允许你发布各种类型的令牌。总的来说，这是一个强大而复杂的 API 身份验证包。但是，大多数应用程序不需要 OAuth2 规范提供的复杂特性，这可能会让用户和开发人员感到困惑。此外，开发人员一直对如何使用 Passport 等 OAuth2 身份验证提供程序对 SPA 应用程序或移动应用程序进行身份验证感到困惑。
+
+2️⃣ [Sanctum](https://learnku.com/docs/laravel/10.x/sanctum/14914)。🔖为了应对 OAuth2 的复杂性和开发人员的困惑，我们着手构建一个更简单、更精简的身份验证包，旨在处理通过令牌进行的第一方 Web 请求和 API 请求。 Laravel Sanctum 发布后，这一目标就实现了。对于除 API 外还提供第一方 web UI 的应用程序，或由单页应用程序（SPA）提供支持的应用程序，或是提供移动客户端的应用程序，Sanctum 是首选推荐的身份验证包。
+
+Laravel Sanctum 是一个混合了 web 和 API 的身份验证包，它让我们管理应用程序的整个身份验证过程成为可能，因为当基于 Sanctum 的应用程序收到请求时，Sanctum 将首先确定请求是否包含引用已验证 session 的 session cookie。Sanctum 通过调用我们前面讨论过的 Laravel 的内置身份验证服务来实现这一点。如果请求没有通过 session cookie 进行身份验证，Sanctum 将检查请求中的 API 令牌。如果存在 API 令牌，则 Sanctum 将使用该令牌对请求进行身份验证。
+
+###### 方案选择
+
+- 如果你的应用程序将使用浏览器访问，并且你正在构建一个单页面的 Laravel 应用程序，那么你的应用程序可以使用 Laravel 的内置身份验证服务。
+- 如果你的应用程序提供将由第三方使用的 API ，你可以在 Passport 或 Sanctum 之间进行选择，为你的应用程序提供 API 令牌身份验证。一般来说，**尽可能选择 Sanctum**，因为它是 API 认证、SPA 认证和移动认证的简单、完整的解决方案，包括对「scopes」或「abilities」的支持。
+- 如果你正在构建一个将由 Laravel 后端支持的单页面应用程序（SPA），那么应该使用 Laravel Sanctum。在使用 Sanctum 时，你需要手动实现自己的后端验证路由 或使用 Laravel Fortify 作为无 header 身份验证后端服务，为注册、密码重置、电子邮件验证等功能提供路由和控制器。
+
+- 当应用程序确定必须使用 OAuth2 规范提供的所有特性时，可以选择 Passport。
+- 如果你想快速入门，我们很高兴推荐 Laravel Breeze 作为启动新 Laravel 应用程序的快速方法，该应用程序已经使用了我们首选的 Laravel 内置身份验证服务和 Laravel Sanctum 身份验证技术栈。
 
 
 
-### 用户授权
+#### 6.1.2 快速开始用户认证 🔖
+
+##### 安装入门套件
+
+ Laravel Breeze 和 Laravel Jetstream
+
+##### 获取已认证的用户信息
+
+##### 路由保护
+
+##### 登录限流
 
 
 
-### Email认证
+#### 6.1.3 手动认证用户
+
+##### 记住密码
+
+##### 其他认证方法
 
 
 
-### 加密解密
+#### 6.1.4 HTTP Basic 认证
+
+##### 无状态 HTTP Basic 认证
 
 
 
-### 哈希
+#### 6.1.5 注销
+
+##### 使其他设备上的会话无效
 
 
 
-### 重置密码
+#### 6.1.6 密码确认
+
+##### 配置
+
+##### 路由
+
+##### 路由保护
 
 
+
+#### 6.1.7 添加自定义看守器
+
+##### 闭包请求看守器
+
+
+
+#### 6.1.8 添加自定义用户提供器
+
+##### 用户提供器契约
+
+##### 用户认证契约
+
+
+
+#### 6.1.9 社会化用户认证
+
+[Laravel Socialite](https://learnku.com/docs/laravel/10.x/socialite/14916)
+
+
+
+#### 6.1.10 事件
+
+
+
+
+
+
+
+### 6.2 用户授权
+
+Laravel提供了一种可以很简单就进行使用的方法，来对用户与资源的授权关系进行管理。 它很安全，即使用户已经通过了「身份验证（authentication)」, 用户也可能无权对应用程序中重要的模型或数据库记录进行删除或更改。**简单、条理化的系统性**，是 Laravel 对授权管理的特性。
+
+Laravel 主要提供了两种授权操作的方法: ==拦截器和策略==。 可以把拦截器（gates）和策略（policies）想象成路由和控制器。拦截器（Gates）提供了一种轻便的基于闭包函数的授权方法，像是路由。而策略（policies)，就像是一个控制器，对特定模型或资源，进行分组管理的逻辑规则。 
+
+你在构建应用程序时，不用为是仅仅使用拦截器（gates）或是仅仅使用策略（policies）而担心，并不需要在两者中进行唯一选择。大多数的应用程序都同时包含两个方法，并且同时使用两者，能够更好的进行工作。拦截器（gates），更适用于**没有与任何模型或资源有关的授权操作**，例如查看管理员仪表盘。与之相反，当你希望为特定的模型或资源进行授权管理时，应该使用策略（policies) 方法。
+
+#### 6.2.1 拦截器
+
+##### 编写拦截器
+
+
+
+##### 授权动作
+
+
+
+##### 拦截器响应
+
+
+
+##### 拦截器拦截检查
+
+
+
+##### 内联授权
+
+
+
+#### 6.2.2 创建策略
+
+##### 生成策略
+
+策略是围绕特定模型或资源组织授权逻辑的类。例如，如果你的应用程序是博客，可能有一个 App\Models\Post 模型和一个相应的 App\Policies\PostPolicy 来授权用户操作，例如创建或更新帖子。
+
+
+
+##### 注册策略
+
+创建了策略类之后，还需要对其进行注册。注册策略是告知 Laravel 在授权针对给定模型类型的操作时使用哪个策略。
+
+
+
+##### 策略自动发现
+
+
+
+
+
+#### 6.2.3 编辑策略
+
+##### 策略方法
+
+注册策略类后，可以为其授权的每个操作添加方法。例如，让我们在 PostPolicy 上定义一个 update 方法，该方法确定给定的 App\Models\User 是否可以更新给定的 App\Models\Post 实例。
+
+
+
+##### 策略响应
+
+
+
+##### 不使用模型的方法
+
+
+
+##### 访客和用户
+
+
+
+##### 策略的过滤器
+
+
+
+#### 6.2.4 使用策略进行授权操作
+
+##### 通过用户模型
+
+
+
+##### 通过控制器辅助函数
+
+
+
+##### 通过中间件
+
+
+
+##### 通过 Blade 模板
+
+
+
+##### 以附加形式提供给上下文调用
+
+
+
+
+
+
+
+
+
+### 6.3 Email认证
+
+#### 简介
+
+在开始之前，需要检查你的 App\Models\User 模型是否实现了 `Illuminate\Contracts\Auth\MustVerifyEmail` 契约
+
+users 表必须有一个 `email_verified_at` 字段，用来存储用户邮箱验证的日期和时间。
+
+#### 路由
+
+为了实现完整的电子邮件验证流程，需要定义三个路由。
+
+##### 1️⃣ 邮箱验证通知
+
+向用户显示通知，告诉用户应该点击注册之后， Laravel 向他们发送的验证邮件中的链接。
+
+##### 2️⃣ Email认证处理
+
+处理用户点击邮件中验证链接时发来的请求。
+
+##### 3️⃣ 重新发送Email认证邮件#
+
+如果用户没有收到验证邮件，则需要一路由来重新发送验证邮件。
+
+
+
+#### 自定义
+
+
+
+#### 事件
+
+
+
+
+
+### 6.4 加密解密
+
+Laravel 的加密服务提供了一个简单、方便的接口，使用 OpenSSL 所提供的 AES-256 和 AES-128 加密和解密文本。所有 Laravel 加密的结果都会使用消息认证码 (MAC) 进行签名，因此一旦加密，其底层值就不能被修改或篡改。
+
+#### 配置
+
+在使用 Laravel 的加密工具之前，你必须先设置 config/app.php 配置文件中的 key 配置项。该配置项由环境变量 APP_KEY 设定。你应当使用 `php artisan key:generate` 命令来生成该变量的值，key:generate 命令将使用 PHP 的安全随机字节生成器为你的应用程序构建加密安全密钥。通常情况下，在 Laravel 安装 中会为你生成 APP_KEY 环境变量的值。
+
+
+
+#### 基本用法
+
+
+
+
+
+### 6.5 哈希
+
+Laravel `Hash` Facad 为存储用户密码提供了安全的 Bcrypt 和 Argon2 哈希。在默认情况下，Bcrypt 将用于注册和身份验证。
+
+Bcrypt 是哈希密码的绝佳选择，因为它的「加密系数」是可调节的，这意味着随着硬件功率的增加，生成哈希的时间可以增加。当哈希密码时，越慢越好。算法花费的时间越长，恶意用户生成「彩虹表」的时间就越长，该表包含所有可能的字符串哈希值，这些哈希值可能会被用于针对应用程序的暴力攻击中。 🔖
+
+可以在 `config/hashing.php` 配置文件中配置默认哈希驱动程序。
+
+#### 基本用法
+
+
+
+
+
+
+
+### 6.6 重置密码
+
+#### 介绍
+
+大多数 Web 应用程序都提供了一种让用户重置密码的方法。Laravel 已经提供了便捷的服务来发送密码重置链接和安全重置密码，而不需要您为每个应用程序重新实现此功能。
+
+##### 模型准备
+
+App\Models\User 模型必须使用 `Illuminate\Notifications\Notifiable` trait。
+
+`Illuminate\Contracts\Auth\CanResetPassword` 契约。框架中包含的 App\Models\User 模型已经实现了该接口，并使用 `Illuminate\Auth\Passwords\CanResetPassword` 特性来包括实现该接口所需的方法。
+
+##### 数据库准备
+
+必须创建一个表来存储您的应用程序的密码重置令牌。
+
+##### 配置可信主机
+
+默认情况下，无论 HTTP 请求的 `Host` 头的内容是什么，Laravel 都会响应它收到的所有请求。此外，在 Web 请求期间生成应用程序的绝对 URL 时，将使用 Host 标头的值。
+
+通常，您应该将 Web 服务器（例如 Nginx 或 Apache）配置为仅向您的应用程序发送与给定主机名匹配的请求。然而，如果你没有能力直接自定义你的 web 服务器并且需要指示 Laravel 只响应某些主机名，你可以通过为你的应用程序启用 `App\Http\Middleware\TrustHosts` 中间件来实现。当您的应用程序提供密码重置功能时，这一点尤其重要。
+
+
+
+#### 路由
+
+要正确实现支持允许用户重置其密码的功能，我们需要定义多个路由。首先，我们需要一对路由来处理允许用户通过其电子邮件地址请求密码重置链接。其次，一旦用户访问通过电子邮件发送给他们的密码重置链接并完成密码重置表单，我们将需要一对路由来处理实际重置密码。
+
+##### 请求密码重置链接
+
+##### 重置密码
+
+
+
+#### 删除过期令牌
+
+#### 自定义
 
 
 
 ## 7 数据库
 
-### 快速入门
+### 7.1 快速入门
+
+#### 简介
+
+Laravel中开发者可以使用原生SQL，[查询构造器](https://learnku.com/docs/laravel/10.x/queries)，以及 [Eloquent ORM](https://learnku.com/docs/laravel/10.x/eloquent) 等方式与数据库交互。
+
+##### 配置
+
+`config/database.php` 
+
+在此文件中，您可以定义所有数据库连接，并指定默认情况下应使用的连接。此文件中的大多数配置选项由应用程序环境变量的值驱动。
+
+##### 读写分离
+
+有时候你可能会希望使用一个数据库连接来执行 SELECT 语句，而 INSERT、UPDATE 和 DELETE 语句则由另一个数据库连接来执行。在 Laravel 中，无论你是使用原生 SQL 查询、查询构造器 或是 Eloquent ORM，都能轻松实现读写分离。
 
 
 
-### 查询构造器
+
+
+#### 运行原生 SQL 查询
+
+DB Facade 为每种类型的查询都提供了相应的方法：select、update、insert、delete 以及 statement。
+
+```php
+DB::select('select * from users where active = ?', [1]);
+// 选择标量值
+$burgers = DB::scalar(
+    "select count(case when food = 'burger' then 1 end) as burgers from menu"
+);
+// 命名绑定
+$results = DB::select('select * from users where id = :id', ['id' => 1]);
+//
+DB::insert('insert into users (id, name) values (?, ?)', [1, 'Marc']);
+// 
+$affected = DB::update(
+    'update users set votes = 100 where name = ?',
+    ['Anita']
+);
+// 
+$deleted = DB::delete('delete from users');
+// 执行指定的 SQL
+DB::statement('drop table users');
+// 直接执行SQL，不需要进行 SQL 预处理绑定
+DB::unprepared('update users set votes = 100 where name = "Dries"');
+```
+
+
+
+在事务中使用 DB::statement($sql) 与 DB::unprepared($sql) 时，你必须要谨慎处理，避免 SQL 语句产生隐式提交。这些语句会导致数据库引擎间接地提交整个事务，让 Laravel 丢失数据库当前的事务级别。下面是一个会产生隐式提交的示例 SQL：创建一个数据库表。
+
+```php
+DB::unprepared('create table a (col varchar(1) null)');
+```
+
+
+
+##### 使用多个数据库连接
+
+
+
+##### 监听查询事件
+
+
+
+##### 监控累计查询时间
 
 
 
 
 
-### 分页
+#### 数据库事务
+
+```php
+DB::transaction(function () {
+    DB::update('update users set votes = 1');
+
+    DB::delete('delete from posts');
+});
+```
+
+##### 1️⃣处理死锁
+
+transaction 方法接受一个可选的第二个参数，该参数定义发生死锁时事务应重试的次数。一旦这些尝试用尽，就会抛出一个异常：
+
+```php
+DB::transaction(function () {
+    DB::update('update users set votes = 1');
+
+    DB::delete('delete from posts');
+}, 5);
+```
+
+##### 2️⃣手动执行事务
+
+手动处理事务并完全控制回滚和提交:
+
+```php
+DB::beginTransaction();
+
+DB::rollBack();
+
+DB::commit();
+```
 
 
 
-### 数据库迁移
+#### 连接到数据库 CLI
+
+```sh
+php artisan db [mysql]
+```
 
 
 
-### 数据填充
+#### 检查数据库
 
 
 
-### Redis
+```php
+php artisan db:show
+php artisan db:show --database=pgsql
+// 行计数和数据库视图详细信息
+php artisan db:show --counts --views  
+php artisan db:table users  
+```
+
+
+
+#### 监控数据库
+
+
+
+```php
+php artisan db:monitor --databases=mysql,pgsql --max=100
+```
+
+
+
+### 7.2 查询构造器🔖
+
+Laravel 查询生成器使用 PDO 参数绑定来保护你的应用程序免受 SQL 注入攻击。无需清理或净化传递给查询生成器的字符串作为查询绑定。
+
+
+
+### 7.3 分页
+
+
+
+### 7.4 数据库迁移
+
+
+
+### 7.5 数据填充
+
+
+
+### 7.6 Redis
 
 
 
@@ -1370,29 +1812,105 @@ Laravel 包含的 Eloquent 模块，是一个对象关系映射 (ORM)，能使�
 
 ## 9 测试
 
-### 快速入门
+### 9.1 快速入门
 
-Laravel 在构建时考虑到了测试。实际上，对 PHPUnit 测试的支持是开箱即用的，并且已经为你的应用程序设置了一个 phpunit.xml 文件。 Laravel 还附带了方便的帮助方法，允许你对应用程序进行富有表现力的测试。
+Laravel 在构建时考虑到了测试。实际上，对 `PHPUnit` 测试的支持是开箱即用的，并且已经为你的应用程序设置了一个 phpunit.xml 文件。 Laravel 还附带了方便的帮助方法，允许你对应用程序进行富有表现力的测试。
 
-默认情况下，你应用程序的 tests 目录下包含两个子目录：Feature 和 Unit。单元测试（Unit）是针对你的代码中非常少，而且相对独立的一部分代码来进行的测试。实际上，大部分单元测试都是针对单个方法进行的。在你的 Unit 测试目录中进行测试，不会启动你的 Laravel 应用程序，因此无法访问你的应用程序的数据库或其他框架服务。
+默认情况下，你应用程序的 tests 目录下包含两个子目录：Feature 和 Unit。
 
-功能测试（Feature）能测试你的大部分代码，包括多个对象如何相互交互，甚至是对 JSON 端点的完整 HTTP 请求。 通常，你的大多数测试应该是功能测试。这些类型的测试可以最大程度地确保你的系统作为一个整体按预期运行。
+**单元测试（Unit）**是针对你的代码中非常少，而且相对独立的一部分代码来进行的测试。实际上，大部分单元测试都是针对**单个方法**进行的。在你的 Unit 测试目录中进行测试，不会启动你的 Laravel 应用程序，因此无法访问你的应用程序的数据库或其他框架服务。
 
-Feature 和 Unit 测试目录中都提供了一个 ExampleTest.php 文件。 安装新的 Laravel 应用程序后，执行 vendor/bin/phpunit 或 php artisan test 命令来运行你的测试。
+**功能测试（Feature）**能测试你的大部分代码，包括多个对象如何相互交互，甚至是对 JSON 端点的完整 HTTP 请求。 通常，你的大多数测试应该是功能测试。这些类型的测试可以最大程度地确保你的系统作为一个整体按预期运行。
 
+Feature 和 Unit 测试目录中都提供了一个 ExampleTest.php 文件。 安装新的 Laravel 应用程序后，执行 vendor/bin/phpunit 或 `php artisan test` 命令来运行你的测试。
 
-
-
-
-### HTTP测试
+#### 环境
 
 
 
-### 命令行测试
+#### 创建测试
+
+```sh
+php artisan make:test UserTest
+php artisan make:test UserTest --unit
+
+php artisan make:test UserTest --pest
+php artisan make:test UserTest --unit --pest
+```
 
 
 
-### Dusk
+#### 运行测试
+
+##### 并行运行测试
+
+##### 测试覆盖率报告
+
+##### 性能分析测试
+
+
+
+### 9.2 HTTP测试
+
+
+
+#### 创建请求
+
+##### 自定义请求头
+
+##### Cookies
+
+##### 会话 / 认证
+
+##### 调试响应
+
+##### 异常处理
+
+
+
+#### 测试 JSON APIs
+
+Laravel 也提供了几个辅助函数来测试 JSON APIs 和其响应。例如，json、getJson、postJson、putJson、patchJson、deleteJson 以及 optionsJson 可以被用于发送各种 HTTP 动作。
+
+##### 验证 JSON 完全匹配
+
+
+
+##### 验证 JSON 路径
+
+
+
+##### 流畅 JSON 测试
+
+
+
+
+
+#### 测试文件上传
+
+
+
+#### 测试视图
+
+渲染切面 & 组件
+
+
+
+#### 可用断言
+
+##### 响应断言
+
+##### 身份验证断言
+
+##### 验证断言
+
+
+
+### 9.3 命令行测试
+
+
+
+### 9.4 Dusk 🔖
 
 [Laravel Dusk](https://github.com/laravel/dusk) 提供了一套富有表现力、易于使用的浏览器自动化和测试 API。默认情况下，Dusk 不需要在本地计算机上安装 JDK 或 Selenium。相反，Dusk 使用一个独立的 [ChromeDriver](https://sites.google.com/chromium.org/driver) 安装包。你可以自由地使用任何其他兼容 Selenium 的驱动程序。
 
@@ -1400,13 +1918,41 @@ Feature 和 Unit 测试目录中都提供了一个 ExampleTest.php 文件。 安
 
 
 
-### 数据库测试
+### 9.5 数据库测试
+
+
+
+#### 每次测试后重置数据库
+
+在进行测试之前，让我们讨论一下如何在每次测试后重置数据库，以便让先前测试的数据不会干扰后续测试。 Laravel 包含的 Illuminate\Foundation\Testing\RefreshDatabase trait 会为你解决这个问题。只需在您的测试类上使用该 Trait。
+
+
+
+#### 模型工厂
+
+
+
+#### 可用的断言
 
 
 
 
 
-### 测试模拟器 Mocking
+### 9.6 测试模拟器 Mocking
+
+在 Laravel 应用程序测试中，你可能希望「模拟」应用程序的某些功能的行为，从而避免该部分在测试中真正执行。例如：在控制器执行过程中会触发事件，您可能希望模拟事件监听器，从而避免该事件在测试时真正执行。这允许你在仅测试控制器 HTTP 响应的情况时，而不必担心触发事件，因为事件侦听器可以在它们自己的测试用例中进行测试。
+
+Laravel 针对事件、任务和 Facades 的模拟，提供了开箱即用的辅助函数。这些函数基于 `Mockery`（[mockery/mockery](https://github.com/mockery/mockery)）封装而成，使用非常方便，无需手动调用复杂的 Mockery 函数。
+
+#### 模拟对象
+
+
+
+#### 模拟 Facades
+
+
+
+#### 设置时间
 
 
 
@@ -2379,7 +2925,7 @@ ARPayroll
 
 https://laravelacademy.org/books/swoole-tutorial
 
-
+https://github.com/nonfu/webchat
 
 
 

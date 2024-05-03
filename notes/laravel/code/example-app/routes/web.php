@@ -6,6 +6,8 @@ use App\Http\Controllers\RequestController;
 use App\Http\Controllers\UserController;
 use App\Livewire\Counter;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\WelcomeController;
 
@@ -206,4 +208,20 @@ Route::get('user/show', [UserController::class, 'show']);
 
 Route::fallback(function () {
     return '其它路由';
+});
+
+
+Route::get('encrypt', function () {
+//    print_r(config());
+
+//    echo Crypt::encryptString("andy");
+//    echo Crypt::decryptString('eyJpdiI6Ik9vOCsvR1JNNUpoSVZTWmZmTWx6SEE9PSIsInZhbHVlIjoib1JtVXo5S0NlQWI5SnhBQU9HcHJsUT09IiwibWFjIjoiNzU5NTdjYzdlYTc5YjU2MGYyODIzYWZkNTY1ODIwZDQ1NzFhZTYxYzVlYmUxNjQ3YmNkNTAyYzcwNzU5MjJlOCIsInRhZyI6IiJ9');
+
+//    echo Hash::make('123456');
+//    echo '<br>';
+//    echo Hash::make('123456', ['rounds' => 12]);
+    $hashedPasswd = Hash::make('123456', ['rounds' => 12]);
+    if (Hash::check('123456', $hashedPasswd)) {
+        echo '密码正确';
+    }
 });

@@ -2927,13 +2927,33 @@ https://laravelacademy.org/books/swoole-tutorial
 
 https://github.com/nonfu/webchat
 
+## 基于Swoole实现高性能HTTP服务器
+
+> Code:SwooleLaravelDemo
 
 
 
+## 基于Swoole实现简单的WebSocket服务器及客户端
+
+> Code:SwooleWebSocket
+
+WebSocket的原理简单的说明：WebSocket 复用了 HTTP 协议来实现握手，然后通过请求报文中的`Upgrade`字段将 HTTP 协议升级到 WebSocket 协议来建立 WebSocket 通信连接，一旦 WebSocket 连接建立之后，就可以在这个长连接上通过 WebSocket 数据帧进行双向通信，客户端和服务端可以在任何时候向对方发送报文，而不是 HTTP 协议那种服务端只有在客户端发起请求后才能响应，从而解决了在 Web 页面实时显示最新资源的问题。
+
+与 HTTP 类似，WebSocket 协议对应的 scheme 是 `ws`，如果是加密的 WebSocket 对应的 scheme 是 `wss`。
 
 
 
+![WebSocket握手](images/c86a81f19872e12ce79d74874eaaf5d2.jpg)
 
+## 在Laravel中集成Swoole实现WebSocket服务器
+
+> Code:SwooleLaravelDemo
+
+
+
+### 配置 Nginx 支持 WebSocket
+
+由于WebSocket通信是基于HTTP协议的，所以还要配置HTTP服务器来支持WebSocket请求。
 
 
 

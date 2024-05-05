@@ -64,7 +64,7 @@ https://learnku.com/laravel/wikis
 ```sh
 composer create-project laravel/laravel example-app
 # 指定版本
-composer create-project laravel/laravel example-app  10.x
+composer create-project laravel/laravel example-app 10.x
 
 
 composer global require laravel/installer
@@ -945,7 +945,7 @@ Route::name('admin.')->group(function () {
 
 ### 4.2 中间体
 
-中间件提供了一种方便的机制来检查和过滤进入应用程序的 HTTP 请求。
+中间件提供了一种方便的机制来**检查和过滤**进入应用程序的==HTTP请求==。
 
 例如，Laravel 包含一个中间件，用于验证应用程序的用户是否经过身份验证。如果用户未通过身份验证，中间件会将用户重定向到应用程序的登录屏幕。 但是，如果用户通过了身份验证，中间件将允许请求进一步进入应用程序。
 
@@ -959,12 +959,96 @@ Route::name('admin.')->group(function () {
 
 > 技巧：所有中间件都通过 服务容器 解析，因此你可以在中间件的构造函数中键入提示你需要的任何依赖项。
 
+#### 1️⃣定义中间件
+
+```sh
+php artisan make:middleware xxxxx
+```
+
+##### 中间件和响应
+
+
+
+#### 2️⃣注册中间件
+
+##### 全局中间件
+
+ `app/Http/Kernel.php` 类的 `$middleware` 属性中列出中间件类。 🔖
+
+##### 将中间件分配给路由
+
+```php
+use App\Http\Middleware\Authenticate;
+
+Route::get('/profile', function () {
+    // ...
+})->middleware(Authenticate::class);
+```
+
+
+
+- 排除中间件
 
 
 
 
 
-### 4.3 CSRF保护
+##### 中间件组
+
+ HTTP 内核的 `$middlewareGroups` 属性
+
+##### 排序中间件
+
+app/Http/Kernel.php 文件的 `$middlewarePriority` 属性指定中间件优先级。
+
+#### 3️⃣中间件参数
+
+中间件也可以接收额外的参数。例如，如果你的应用程序需要在执行给定操作之前验证经过身份验证的用户是否具有给定的「角色」，你可以创建一个 `EnsureUserHasRole` 中间件，该中间件接收角色名称作为附加参数。
+
+额外的中间件参数将在 $next 参数之后传递给中间件：
+
+```php
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+class EnsureUserHasRole
+{
+    /**
+     * 处理传入请求。
+     *
+     */
+    public function handle(Request $request, Closure $next, string $role): Response
+    {
+        if (! $request->user()->hasRole($role)) {
+            // 重定向。。。
+        }
+        return $next($request);
+    }
+}
+```
+
+在定义路由时，可以指定中间件参数，方法是使用 : 分隔中间件名称和参数。多个参数应以逗号分隔：
+
+```php
+Route::put('/post/{id}', function (string $id) {
+    // ...
+})->middleware('role:editor');
+```
+
+
+
+#### 4️⃣可终止的中间件
+
+如果你在中间件上定义了一个 terminate 方法，并且你的 Web 服务器使用 FastCGI，则在将响应发送到浏览器后会自动调用 terminate 方法。
+
+
+
+### 4.3 CSRF保护 🔖
 
 跨站点请求伪造是一种恶意利用，利用这种手段，代表经过身份验证的用户执行未经授权的命令。
 
@@ -1011,6 +1095,8 @@ Route::get('task/{id}/delete', function ($id) {
 
 
 
+
+
 ### 4.4 控制器
 
 将所有业务逻辑一股脑放到控制器听起来挺不错，但是控制器更适合承担的角色其实是负责对 HTTP 请求进行路由，因为还有很多其他访问应用的方式，比如 Artisan 命令、队列、调度任务等等，控制器并非唯一入口，所以不适合也不应该将所有业务逻辑封装于此，过度依赖控制器会对以后应用的扩展带来麻烦。所以，你应该具备这样的意识：控制器的主要职责就是获取 HTTP 请求，进行一些简单处理（如验证）后将其传递给真正处理业务逻辑的职能部门，如 Service。
@@ -1019,33 +1105,97 @@ Route::get('task/{id}/delete', function ($id) {
 
 
 
-#### 依赖注入
+#### 1️⃣编写控制器
 
-正如前面介绍的 `Input` 门面一样，Laravel 中的门面为 Laravel 代码库中的大部分类提供了简单的接口调用，通过门面你可以轻松从当前获取各种请求数据，比如用户输入、Session、Cookie 等，但不是所有的类都有对应的门面（当前的映射关系可以查看[门面列表](https://laravelacademy.org/post/9536.html#toc-6)），对于这些类提供的方法我们可以通过更底层的依赖注入来调用，本质上来看，门面仅仅是一种设计模式，是对底层复杂 API 的上层静态代理，主要目的在于简化代码调用，所以可以用门面调用的方法肯定可以用依赖注入来实现，而可以通过依赖注入实现的功能不一定可以通过门面来调用，除非你自定义实现这个门面。
+##### 基本控制器
 
-提到依赖注入，就绕不开[服务容器](https://laravelacademy.org/post/9534.html)，关于服务容器后面我们会单独讲解，而现在你只需了解服务容器是一个绑定多个接口与具体服务实现类的容器，而依赖注入则是在代码编写时以接口（或者叫做类型提示）方式作为参数，不必传入具体实现类，在代码运行时会根据配置从服务容器获取接口对应的实现类执行具体的接口方法，从而极大提高了代码的可维护性和可扩展性。
-
-在 Laravel 中所有的控制器方法（包括构造函数）都会在服务容器中进行解析，这意味着所有方法中传入的可以被容器解析的接口/类型提示对应服务实现都会被自动注入，我们将这个过程称之为依赖注入。我们上面演示的通过 `$request` 对象获取用户请求数据就是采用依赖注入的方式。
-
-在日常开发中，推荐大家使用依赖注入而非门面来获取用户输入数据，除此之外，还可以通过 `$request` 对象获取 Session、Cookie 数据。
-
-
-
-#### 资源控制器
-
-有时候在编写控制器时命名方法名称可能是最困难的，好在 Laravel 为常见的 REST/CRUD 控制器（在 Laravel 中称之为「资源控制器」）提供了一套约定规则，并为此提供了相应的 Artisan 生成器和路由定义方法，从方便我们一次为所有控制器方法定义路由。
-
-使用这个 Artisan 生成器来生成一个资源控制器:
-
-```sh
-php artisan make:controller PostController --resource
+```shell
+php artisan make:controller XxxController
 ```
 
 
 
-##### 资源控制器方法列表
+> 控制器并不是必需继承基础类。如果控制器没有继承基础类，你将无法使用一些便捷的功能，比如 middleware 和 authorize 方法。
 
-生成的 `PostController` 控制器的每个方法都有对应的请求方式、路由命名、URL、方法名和业务逻辑约定。
+##### 单动作控制器
+
+`__invoke` 方法：
+
+```php
+class ProvisionServer extends Controller
+{
+    /**
+     * 设置新的web服务器。
+     */
+    public function __invoke()
+    {
+        // ...
+    }
+}
+```
+
+
+
+```sh
+php artisan make:controller ProvisionServer --invokable
+```
+
+#### 2️⃣控制器中间件
+
+中间件可以在路由文件中分配给控制器的路由：
+
+```php
+Route::get('profile', [UserController::class, 'show'])->middleware('auth');
+```
+
+也可以在控制器的构造函数中指定中间件：
+
+```php
+class UserController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware('log')->only('index');
+        $this->middleware('subscribed')->except('store');
+    }
+}
+```
+
+
+
+
+
+#### 3️⃣资源控制器
+
+如果你将应用程序中的每个 Eloquent 模型都视为资源，那么通常对应用程序中的每个资源都执行相同的操作。例如，假设你的应用程序中包含一个 Photo 模型和一个 Movie 模型。用户可能可以创建，读取，更新或者删除这些资源。
+
+Laravel 的资源路由通过单行代码即可将典型的增删改查（“CURD”）路由分配给控制器。首先，我们可以使用 Artisan 命令 make:controller 的 --resource 选项来快速创建一个控制器:
+
+```sh
+php artisan make:controller PhotoController --resource
+```
+
+这个命令将会生成一个控制器 app/Http/Controllers/PhotoController.php。其中包括每个可用资源操作的方法。接下来，你可以给控制器注册一个资源路由：
+
+```php
+use App\Http\Controllers\PhotoController;
+
+Route::resource('photos', PhotoController::class);
+```
+
+这个单一的路由声明创建了多个路由来处理资源上的各种行为。生成的控制器为每个行为保留了方法，而且你可以通过运行 Artisan 命令 `route:list` 来快速了解你的应用程序。
+
+你可以通过将数组传参到 resources 方法中的方式来一次性的创建多个资源控制器：
+
+```php
+Route::resources([
+    'photos' => PhotoController::class,
+    'posts' => PostController::class,
+]);
+```
+
+###### 资源控制器方法列表
 
 | HTTP请求方式 | URL            | 控制器方法 | 路由命名    | 业务逻辑描述                 |
 | ------------ | -------------- | ---------- | ----------- | ---------------------------- |
@@ -1057,23 +1207,413 @@ php artisan make:controller PostController --resource
 | PUT          | post/{id}      | update()   | post.update | 获取编辑表单输入并更新文章   |
 | DELETE       | post/{id}      | destroy()  | post.desc   | 删除单个文章                 |
 
-##### 绑定资源服务器
+###### 自定义缺失模型行为
 
-`Route::resource` 方法用于一次注册包含上面列出的所有路由，并且遵循上述所有约定：
+```php
+Route::resource('photos', PhotoController::class)
+        ->missing(function (Request $request) {
+            return Redirect::route('photos.index');
+        });
+```
+
+###### 软删除模型
+
+```php
+Route::resource('photos', PhotoController::class)->withTrashed();
+```
+
+###### 指定资源模型
+
+```sh
+php artisan make:controller PhotoController --model=Photo --resource
+```
+
+###### 生成表单请求
 
 ```
-Route::resource('post', PostController::class);
+php artisan make:controller PhotoController --model=Photo --resource --requests
 ```
+
+##### 部分资源路由
+
+```php
+Route::resource('photos', PhotoController::class)->only([
+    'index', 'show'
+]);
+
+Route::resource('photos', PhotoController::class)->except([
+    'create', 'store', 'update', 'destroy'
+]);
+```
+
+###### API资源路由
+
+```php
+Route::apiResource('photos', PhotoController::class);
+```
+
+
+
+##### 嵌套资源🔖
+
+```php
+Route::resource('photos.comments', PhotoCommentController::class);
+```
+
+```
+/photos/{photo}/comments/{comment}
+```
+
+###### 嵌套资源的范围
+
+###### 浅嵌套
+
+
+
+##### 命名资源路由
+
+```php
+Route::resource('photos', PhotoController::class)->names([
+    'create' => 'photos.build'
+]);
+```
+
+
+
+##### 命名资源路由参数
+
+默认情况下，Route::resource 会根据资源名称的「单数」形式创建资源路由的路由参数。你可以使用 parameters 方法来轻松地覆盖资源路由名称。传入 parameters 方法应该是资源名称和参数名称的关联数组：
+
+```php
+use App\Http\Controllers\AdminUserController;
+
+Route::resource('users', AdminUserController::class)->parameters([
+    'users' => 'admin_user'
+]);
+```
+
+
+
+##### 限定范围的资源路由
+
+
+
+##### 本地化资源URIs
+
+
+
+##### 补充资源控制器
+
+
+
+##### 单例资源控制器
+
+
+
+
+
+#### 4️⃣依赖注入和控制器
+
+> 依赖注入
+>
+> 正如前面介绍的 `Input` 门面一样，Laravel 中的门面为 Laravel 代码库中的大部分类提供了简单的接口调用，通过门面你可以轻松从当前获取各种请求数据，比如用户输入、Session、Cookie 等，但不是所有的类都有对应的门面（当前的映射关系可以查看[门面列表](https://laravelacademy.org/post/9536.html#toc-6)），对于这些类提供的方法我们可以通过更底层的依赖注入来调用，本质上来看，门面仅仅是一种设计模式，是对底层复杂 API 的上层静态代理，主要目的在于简化代码调用，所以可以用门面调用的方法肯定可以用依赖注入来实现，而可以通过依赖注入实现的功能不一定可以通过门面来调用，除非你自定义实现这个门面。
+>
+> 提到依赖注入，就绕不开[服务容器](https://laravelacademy.org/post/9534.html)，关于服务容器后面我们会单独讲解，而现在你只需了解服务容器是一个绑定多个接口与具体服务实现类的容器，而依赖注入则是在代码编写时以接口（或者叫做类型提示）方式作为参数，不必传入具体实现类，在代码运行时会根据配置从服务容器获取接口对应的实现类执行具体的接口方法，从而极大提高了代码的可维护性和可扩展性。
+>
+> 在 Laravel 中所有的控制器方法（包括构造函数）都会在服务容器中进行解析，这意味着所有方法中传入的可以被容器解析的接口/类型提示对应服务实现都会被自动注入，我们将这个过程称之为依赖注入。我们上面演示的通过 `$request` 对象获取用户请求数据就是采用依赖注入的方式。
+>
+> 在日常开发中，推荐大家使用依赖注入而非门面来获取用户输入数据，除此之外，还可以通过 `$request` 对象获取 Session、Cookie 数据。
+
+##### 构造函数注入
+
+
+
+##### 方法注入
 
 
 
 ### 4.4 请求
 
+`Illuminate\Http\Request`
+
+#### 1️⃣与请求交互
+
+##### 访问请求
+
+##### 依赖注入和路由参数
+
+
+
+##### 请求路径，主机和方法
+
+
+
+###### 检索请求路径
+
+###### 检查请求路径/路由
+
+###### 检索请求URL
+
+###### 获取请求主机
+
+###### 获取请求方法
 
 
 
 
-### 4.5 响应
+
+##### 请求头
+
+```php
+$value = $request->header('X-Header-Name');
+$value = $request->header('X-Header-Name', 'default');
+
+if ($request->hasHeader('X-Header-Name')) {
+    // ...
+}
+// 从 Authorization 标头检索授权标记
+$token = $request->bearerToken();
+```
+
+
+
+##### 请求IP地址
+
+
+
+##### 内容协商
+
+Laravel 提供了几种方法，通过 Accept 标头检查传入请求的请求内容类型。
+
+```php
+// 
+$contentTypes = $request->getAcceptableContentTypes();
+
+if ($request->accepts(['text/html', 'application/json'])) {
+    // ...
+}
+// 确定给定内容类型数组中的哪种内容类型由请求最具优势。如果请求未接受任何提供的内容类型，则返回 null。
+$preferred = $request->prefers(['text/html', 'application/json']);
+// 确定传入请求是否期望获得 JSON 响应
+if ($request->expectsJson()) {
+    // ...
+}
+```
+
+
+
+##### PSR-7
+
+请求 [PSR-7 标准](https://www.php-fig.org/psr/psr-7/)指定了 HTTP 消息的接口，包括请求和响应。如果您想获取 PSR-7 请求的实例而不是 Laravel 请求，您需要先安装一些库。Laravel 使用 Symfony HTTP 消息桥组件将典型的 Laravel 请求和响应转换为与 PSR-7 兼容的实现：
+
+```sh
+composer require symfony/psr-http-message-bridge
+composer require nyholm/psr7
+```
+
+
+
+#### 2️⃣输入
+
+##### 检索输入
+
+###### 检索所有输入数据
+
+###### 检索输入值
+
+###### 从查询字符串获取输入
+
+###### 取回 JSON 输入值
+
+###### 获取 Stringable 输入值
+
+###### 获取布尔输入值
+
+###### 检索日期输入值
+
+###### 检索枚举输入值
+
+###### 通过动态属性检索输入
+
+###### 检索输入数据的一部分
+
+
+
+##### 判断输入是否存在
+
+```php
+if ($request->has('name')) {
+    // ...
+}
+
+$request->whenHas('name', function (string $input) {
+    // ...
+});
+
+if ($request->hasAny(['name', 'email'])) {
+    // ...
+}
+
+if ($request->filled('name')) {
+    // ...
+}
+
+$request->whenFilled('name', function (string $input) {
+    // ...
+});
+
+if ($request->missing('name')) {
+    // ...
+}
+
+$request->whenMissing('name', function (array $input) {
+    // "name" 值缺失...
+}, function () {
+    // "name" 值存在...
+});
+```
+
+
+
+##### 合并附加输入
+
+```php
+$request->merge(['votes' => 0]);
+$request->mergeIfMissing(['votes' => 0]);
+```
+
+
+
+##### 旧输入
+
+
+
+##### Cookies
+
+
+
+
+
+##### 输入修整和规范化
+
+禁用输入规范化
+
+
+
+#### 3️⃣文件
+
+##### 检索上传的文件
+
+```php
+$file = $request->file('photo');
+$file = $request->photo;
+
+if ($request->hasFile('photo')) {
+    // ...
+}
+
+```
+
+
+
+##### 验证上传是否成功
+
+```php
+if ($request->file('photo')->isValid()) {
+    // ...
+}
+```
+
+##### 文件路径和扩展名
+
+```php
+$path = $request->photo->path();
+
+$extension = $request->photo->extension();
+```
+
+
+
+##### 其他文件方法
+
+
+
+##### 存储上传的文件
+
+```php
+$path = $request->photo->store('images');
+$path = $request->photo->store('images', 's3');
+
+
+$path = $request->photo->storeAs('images', 'filename.jpg');
+$path = $request->photo->storeAs('images', 'filename.jpg', 's3');
+```
+
+
+
+#### 4️⃣配置受信任代理
+
+`Illuminate\Http\Middleware\TrustProxies`
+
+信任所有代理
+
+
+
+#### 5️⃣配置互信主机
+
+
+
+### 4.5 响应 🔖
+
+#### 1️⃣创建响应
+
+
+
+
+
+添加响应头
+
+
+
+添加响应 Cookies
+
+
+
+Cookies & 加密
+
+#### 2️⃣重定向
+
+重定向到命名路由
+
+
+
+重定向到控制器方法
+
+
+
+重定向到外部域名
+
+
+
+重定向并使用闪存的 Session 数据
+
+#### 3️⃣其它响应类型
+
+视图响应
+
+
+
+JSON 响应
+
+
+
+文件下载
+
+
+
+文件响应
+
+#### 4️⃣响应宏
 
 
 
@@ -1138,103 +1678,446 @@ Blade 模板引擎有三种常见的语法：
 
 
 
-### 4.8 Vite编译Assets
+### 4.8 Vite编译Assets 🔖
 
 Vite 是一款现代前端构建工具，提供极快的开发环境并将你的代码捆绑到生产准备的资源中。在使用 Laravel 构建应用程序时，通常会使用 Vite 将你的应用程序的 CSS 和 JavaScript 文件绑定到生产环境的资源中。
 
 
 
-
-
-### 生成URL
-
+#### 选择 Vite 还是 Laravel Mix
 
 
 
+### 4.9 生成URL
 
-### 会话
+Laravel 提供了几个辅助函数来为应用程序生成 URL。主要用于在模板和 API 响应中构建 URL 或者在应用程序的其它部分生成重定向响应。
+
+#### 基础
+
+```php
+// 生成基础URLs
+$post = App\Models\Post::find(1);
+echo url("/posts/{$post->id}");
+// http://example.com/posts/1
+
+
+// 访问当前URL
+// 获取当前 URL 没有 query string...
+echo url()->current();
+// 获取当前 URL 包括 query string...
+echo url()->full();
+// 获取上个请求 URL
+echo url()->previous();
+```
 
 
 
-### 表单验证
+#### 命名路由的 URLs
+
+```php
+Route::get('/post/{post}', function (Post $post) {
+    // ...
+})->name('post.show');
+echo route('post.show', ['post' => 1]);
+// http://example.com/post/1
+
+
+Route::get('/post/{post}/comment/{comment}', function (Post $post, Comment $comment) {
+    // ...
+})->name('comment.show');
+echo route('comment.show', ['post' => 1, 'comment' => 3]);
+// http://example.com/post/1/comment/3
+
+
+// 任何与路由定义参数对应不上的附加数组元素都将添加到 URL 的查询字符串中：
+echo route('post.show', ['post' => 1, 'search' => 'rocket']);
+// http://example.com/post/1?search=rocket
+```
 
 
 
-### 错误处理
+#### 签名 URLs
 
 
 
-### 日志
+#### 控制器行为的 URLs
+
+```php
+$url = action([HomeController::class, 'index']);
+```
+
+
+
+#### 默认值
+
+
+
+
+
+### 4.10 会话
+
+由于 HTTP 驱动的应用程序是无状态的，Session 提供了一种在多个请求之间存储有关用户信息的方法，这类信息一般都存储在后续请求可以访问的持久存储 / 后端中。
+Laravel 通过同一个可读性强的 API 处理各种自带的后台驱动程序。支持诸如比较热门的 Memcached、 Redis 和数据库。
+
+
+
+### 4.11 表单验证 🔖
+
+
+
+### 4.12 错误处理
+
+
+
+#### 1️⃣配置
+
+#### 2️⃣异常处理
+
+##### 异常报告
+
+##### 异常日志级别
+
+##### 忽略指定类型异常
+
+##### 渲染异常
+
+##### Reportable & Renderable 异常
+
+#### 3️⃣HTTP 异常
+
+自定义 HTTP 错误页面
+
+
+
+### 4.13 日志
+
+Laravel 提供了强大的日志记录服务，允许您将日志记录到文件、系统错误日志，甚至记录到Slack以通知您的整个团队。
+
+Laravel 日志基于「 通道 」。 每个通道代表一种写入日志信息的特定方式。 例如，single 通道是将日志写入到单个日志文件中。而 slack 通道是将日志发送到 Slack 上。 基于它们的重要程度，日志可以被写入到多个通道中去。
+
+在底层，Laravel 利用 Monolog 库，它为各种强大的日志处理程序提供了支持。 Laravel 使配置这些处理程序变得轻而易举，允许您混合和匹配它们，以自定义应用程序的方式完成日志处理。
+
+
+
+#### 1️⃣配置
+
+config/logging.php
+
+默认情况下，Laravel 在记录日志消息时使用 `stack` 频道。`stack` 频道用于将多个日志频道聚合到一个频道中。
+
+##### 有效通道驱动列表
+
+| 名称         | 描述                                                         |
+| ------------ | ------------------------------------------------------------ |
+| `stack`      | 用于创建「多通道」通道的聚合器                               |
+| `single`     | 基于单文件/路径的日志通道（`StreamHandler`）                 |
+| `daily`      | 基于 `RotatingFileHandler` 的 Monolog 驱动，以天为维度对日志进行分隔 |
+| `slack`      | 基于 `SlackWebhookHandler` 的 Monolog 驱动                   |
+| `papertrail` | 基于 `SyslogUdpHandler` 的 Monolog 驱动                      |
+| `syslog`     | 基于 `SyslogHandler` 的 Monolog 驱动                         |
+| `errorlog`   | 基于 `ErrorLogHandler` 的 Monolog 驱动                       |
+| `monolog`    | Monolog 改成驱动，可以使用所有支持的 Monolog 处理器          |
+| `custom`     | 调用指定改成创建通道的驱动                                   |
+| `null`       | 一个丢弃所有日志消息的驱动                                   |
+
+> 
+
+
+
+##### 通道预备知识
+
+
+
+##### 日志记录警告
+
+
+
+#### 2️⃣构建日志堆栈
+
+
+
+#### 3️⃣入日志信息
+
+##### 上下文信息
+
+##### 写入指定通道
+
+#### 4️⃣Monolog 通道定制
+
+##### 为通道自定义 Monolog
+
+##### 创建 Monolog 处理器通道
+
+##### 通过工厂创建通道
 
 
 
 ## 5 继续深入
 
-### Artisan 命令行
+### 5.1 Artisan命令行
 
 
 
 
 
-### 广播系统
+### 5.2 广播系统 🔖
+
+在许多现代 Web 应用程序中，WebSockets 用于实现实时的、实时更新的用户界面。当服务器上的某些数据更新时，通常会发送一条消息到 WebSocket 连接，以由客户端处理。WebSockets 提供了一种更有效的替代方法，可以**连续轮询应用程序服务器以反映UI中应该反映的数据更改**。
+
+举个例子，假设你的应用程序能够将用户的数据导出为 CSV 文件并通过电子邮件发送给他们。但是，创建这个 CSV 文件需要几分钟的时间，因此你选择在队列任务中创建和发送 CSV。当 CSV 文件已经创建并发送给用户后，我们可以使用事件广播来分发 App\Events\UserDataExported 事件，该事件由我们应用程序的 JavaScript 接收。一旦接收到事件，我们可以向用户显示消息，告诉他们他们的 CSV 已通过电子邮件发送给他们，而无需刷新页面。
+
+为了帮助你构建此类特性，Laravel 使得在 WebSocket 连接上 “广播” 你的服务端 Laravel 事件变得简单。广播你的 Laravel 事件允许你在你的服务端 Laravel 应用和客户端 JavaScript 应用之间共享相同的事件名称和数据。
+
+广播背后的核心概念很简单：客户端在前端连接到命名通道，而你的 Laravel 应用在后端向这些通道广播事件。这些事件可以包含任何你想要向前端提供的其他数据。
 
 
 
-### 缓存系统
+### 5.3 缓存系统
+
+Laravel 为各种缓存后端提供了富有表现力且统一的 API，以便你利用它们极快的查询数据来加快你的应用。
+
+#### 配置
+
+驱动程序前提条件
+
+#### 缓存用法
+
+获取一个缓存实例
+从缓存中检索项目
+将项目存储在缓存中
+从缓存中删除项目
+缓存助手
+
+#### 缓存标签
+
+存储带有标签的缓存项
+访问带有标签的缓存项
+删除带标签的缓存项
+修剪过期的缓存标签
+
+#### 原子锁
+
+驱动程序先决条件
+管理锁
+跨进程管理锁定
+
+#### 添加自定义缓存驱动程序
+
+编写驱动程序
+注册驱动程序
+
+#### 事件
 
 
 
 
 
-### 集合
+
+
+### 5.4 集合
+
+`Illuminate\Support\Collection` 类为处理数据数组提供了一个流畅、方便的包装器。
+
+使用 `collect` 助手从数组中创建一个新的集合实例，对每个元素运行 `strtoupper` 函数，然后删除所有空元素：
+
+```php
+
+$collection = collect(['taylor', 'abigail', null])->map(function (?string $name) {
+    return strtoupper($name);
+})->reject(function (string $name) {
+    return empty($name);
+});
+```
 
 
 
-### 契约（Contract）
+
+
+
+
+
+
+### 5.5 契约（Contract）
 
 Laravel 的「契约（Contract）」是一组接口，它们定义由框架提供的核心服务。
 
+Laravel 的「契约（Contract）」是一组接口，它们定义由框架提供的核心服务。例如，`illuste\Contracts\Queue\Queue` Contract 定义了队列所需的方法，而 illuste\Contracts\Mail\Mailer Contract 定义了发送邮件所需的方法。
 
+每个契约都有由框架提供的相应实现。
 
-### 事件系统
+#### Contract 对比 Facade
 
+Laravel 的 Facade 和辅助函数提供了一种利用 Laravel 服务的简单方法，无需类型提示并可以从服务容器中解析 Contract。在大多数情况下，每个 Facade 都有一个等效的 Contract。
 
+和 Facade（不需要在构造函数中引入）不同，Contract 允许你为类定义显式依赖关系。一些开发者更喜欢以这种方式显式定义其依赖项，所以更喜欢使用 Contract，而其他开发者则享受 Facade 带来的便利。通常，**大多数应用都可以在开发过程中使用 Facade**。
 
-### 文件系统
+#### 何时使用 Contract
 
+#### 如何使用 Contract
 
-
-
-
-### 辅助函数
-
-
-
-
-
-### HTTP客户端
+#### Contract 参考
 
 
 
+### 5.6 事件系统
+
+Laravel 的事件系统提供了一个简单的观察者模式的实现，允许你能够订阅和监听在你的应用中的发生的各种事件。事件类一般来说存储在 app/Events 目录，监听者的类存储在 app/Listeners 目录。
+
+事件系统可以作为一个非常棒的方式来解耦你的系统的方方面面，因为一个事件可以有多个完全不相关的监听者。例如，你希望每当有订单发出的时候都给你发送一个 Slack 通知。你大可不必将你的处理订单的代码和发送 slack 消息的代码放在一起，你只需要触发一个 App\Events\OrderShipped 事件，然后事件监听者可以收到这个事件然后发送 slack 通知。
+
+#### 注册事件和监听器
+
+生成事件和监听器
+
+手动注册事件
+
+事件发现
+
+#### 定义事件
 
 
-### 本地化
+
+#### 定义监听器
 
 
 
-### 发送邮件
+#### 队列事件监听器
+
+手动与队列
+
+交互队列事件监听器和数据库事务
+
+处理失败的队列
+
+
+
+#### 调度事件
+
+
+
+#### 事件订阅者
+
+编写事件订阅者注册事件订阅者
+
+#### 测试
+
+模拟一部分事件
+
+作用域事件模拟
 
 
 
 
 
-### 消息通知
+### 5.7 文件系统
+
+Laravel 提供了一个强大的文件系统抽象，这要感谢 Frank de Jonge 的 [Flysystem](https://github.com/thephpleague/flysystem) PHP 包。Laravel 的 Flysystem 集成提供了 简单的驱动来处理本地文件系统、SFTP 和 Amazon S3。更棒的是，在你的本地开发机器和生产服务器之间切换这些存储选项是非常简单的，因为每个系统的 API 都是一样的。
+
+
+
+#### 配置
+
+本地驱动
+
+公共磁盘
+
+驱动先决要求
+
+分区和只读文件系统
+
+Amazon S3兼容文件系统
+
+#### 获取磁盘实例
+
+按需配置磁盘
+
+#### 检索文件
+
+下载文件
+
+文件URL
+
+临时 URL
+
+文件元数据
+
+#### 保存文件
+
+预置和附加文件
+
+复制和移动文件
+
+自动流式传输
+
+文件上传
+
+文件可见性
+
+
+
+#### 删除文件
+
+
+
+#### 目录
+
+
+
+#### 测试
+
+
+
+#### 自定义文件系统
 
 
 
 
 
-### 扩展包开发
+### 5.8 辅助函数
+
+全局 PHP 「辅助」函数，框架本身也大量的使用了这些功能函数。
+
+#### 数组 & 对象
+
+#### 路径
+
+#### 字符串
+
+#### 字符流处理
+
+#### URLs
+
+#### 杂项
+
+
+
+### 5.9 HTTP客户端 🔖
+
+
+
+
+
+### 5.10 本地化
+
+`lang:publish`
+
+
+
+
+
+### 5.11 发送邮件
+
+Laravel 基于 [Symfony Mailer](https://symfony.com/doc/6.0/mailer.html) 组件提供了一个简洁、简单的邮件 API。Laravel 和 Symfony 为 Mailer SMTP 、Mailgun 、Postmark 、 Amazon SES 、 及 sendmail （发送邮件的方式）提供驱动，允许你通过本地或者云服务来快速发送邮件。
+
+
+
+### 5.12 消息通知
+
+
+
+
+
+### 5.13 扩展包开发
 
 包是向 Laravel 添加功能的主要方式。包可能是处理日期的好方法，例如 [Carbon](https://github.com/briannesbitt/Carbon)，也可能是允许您将文件与 Eloquent 模型相关联的包，例如 Spatie 的 [Laravel 媒体库](https://github.com/spatie/laravel-medialibrary)。
 
@@ -1246,23 +2129,67 @@ Laravel 的「契约（Contract）」是一组接口，它们定义由框架提�
 
 
 
-### 进程管理
+### 5.14 进程管理
 
-Laravel 通过 Symfony Process 组件 提供了一个小而美的 API，让你可以方便地从 Laravel 应用程序中调用外部进程。 Laravel 的进程管理功能专注于提供最常见的用例和提升开发人员体验。
+Laravel 通过 [Symfony Process](https://symfony.com/doc/current/components/process.html) 组件 提供了一个小而美的 API，让你可以方便地从 Laravel 应用程序中调用外部进程。 Laravel 的进程管理功能专注于提供最常见的用例和提升开发人员体验。
+
+#### 调用过程
+
+进程选项
+
+进程输出
+
+#### 异步进程
+
+进程ID和信号
+
+异步进程输出
+
+#### 并行进程
+
+命名进程池中的进程
+
+进程池进程ID和信号
+
+#### 测试
+
+伪造进程
+
+伪造指定进程
+
+伪造进程序列
+
+伪造异步进程的生命周期
+
+可用的断言
+
+防止运行未被伪造的进程
 
 
 
-### 队列
+
+
+### 5.15 队列 🔖
+
+Laravel 队列为各种不同的队列驱动提供统一的队列 API，例如 Amazon SQS，Redis，甚至关系数据库。
+
+Laravel 队列的配置选项存储在 config/queue.php 文件中。 在这个文件中，你可以找到框架中包含的每个队列驱动的连接配置，包括数据库， Amazon SQS, Redis， 和 Beanstalkd 驱动，以及一个会立即执行作业的同步驱动（用于本地开发）。还包括一个用于丢弃排队任务的 null 队列驱动。
 
 
 
-### 请求限流
+
+
+### 5.16 请求限流
+
+Laravel 包含了一个开箱即用的，基于 缓存 实现的限流器，提供了一个简单的方法来限制指定时间内的任何操作。
 
 
 
+### 5.17 任务调度
+
+Laravel 的命令行调度器允许你在 Laravel 中清晰明了地定义命令调度。在使用这个任务调度器时，你只需要在你的服务器上创建单个 Cron 入口。你的任务调度在 app/Console/Kernel.php 的 schedule 方法中进行定义。
 
 
-### 任务调度
 
 
 

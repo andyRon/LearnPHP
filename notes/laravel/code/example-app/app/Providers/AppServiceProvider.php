@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use Illuminate\Database\Connection;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -41,6 +44,18 @@ class AppServiceProvider extends ServiceProvider
             return "<?php echo \Carbon\Carbon::parse({$date})->format({$format}); ?>";
         });
 
+
+        // 监听数据库
+        DB::listen(function (QueryExecuted $q) {
+            dump($q->sql);
+//            dump($q->bindings);
+//            dump($q->time);
+        });
+
+        // 监控，当查询时间超过某个阈值（毫秒）时调用
+        DB::whenQueryingForLongerThan(500, function (Connection $connection, QueryExecuted $event) {
+            dump("查询时间过长，通知开发团队");
+        });
     }
 
 }

@@ -2542,7 +2542,7 @@ Laravel中开发者可以使用原生SQL，[查询构造器](https://learnku.com
 
 在此文件中，您可以定义所有数据库连接，并指定默认情况下应使用的连接。此文件中的大多数配置选项由应用程序环境变量的值驱动。
 
-##### 读写分离
+##### 读写分离 🔖
 
 有时候你可能会希望使用一个数据库连接来执行 SELECT 语句，而 INSERT、UPDATE 和 DELETE 语句则由另一个数据库连接来执行。在 Laravel 中，无论你是使用原生 SQL 查询、查询构造器 或是 Eloquent ORM，都能轻松实现读写分离。
 
@@ -2579,7 +2579,7 @@ DB::unprepared('update users set votes = 100 where name = "Dries"');
 
 
 
-在事务中使用 DB::statement($sql) 与 DB::unprepared($sql) 时，你必须要谨慎处理，避免 SQL 语句产生隐式提交。这些语句会导致数据库引擎间接地提交整个事务，让 Laravel 丢失数据库当前的事务级别。下面是一个会产生隐式提交的示例 SQL：创建一个数据库表。
+在事务中使用 `DB::statement($sql)` 与 `DB::unprepared($sql)` 时，你必须要谨慎处理，避免 SQL 语句产生隐式提交。这些语句会导致数据库引擎间接地提交整个事务，让 Laravel 丢失数据库当前的事务级别。下面是一个会产生隐式提交的示例 SQL：创建一个数据库表。
 
 ```php
 DB::unprepared('create table a (col varchar(1) null)');
@@ -2587,21 +2587,32 @@ DB::unprepared('create table a (col varchar(1) null)');
 
 
 
-##### 使用多个数据库连接
+##### 使用多个数据库连接 🔖
 
 
 
 ##### 监听查询事件
 
+```php
+// 监听数据库
+DB::listen(function (QueryExecuted $q) {
 
+    dump($q->sql, $q->bindings, $q->time);
+});
+```
 
 ##### 监控累计查询时间
 
+```php
+// 监控，当查询时间超过某个阈值（毫秒）时调用
+DB::whenQueryingForLongerThan(500, function (Connection $connection, QueryExecuted $event) {
+    dump("查询时间过长，通知开发团队");
+});
+```
 
 
 
-
-#### 数据库事务
+#### 数据库事务  🔖
 
 ```php
 DB::transaction(function () {
@@ -2640,10 +2651,9 @@ DB::commit();
 #### 连接到数据库 CLI
 
 ```sh
-php artisan db [mysql]
+php artisan db
+php artisan db mysql
 ```
-
-
 
 #### 检查数据库
 
@@ -2659,7 +2669,7 @@ php artisan db:table users
 
 
 
-#### 监控数据库
+#### 监控数据库 🔖
 
 
 
@@ -2669,9 +2679,547 @@ php artisan db:monitor --databases=mysql,pgsql --max=100
 
 
 
-### 7.2 查询构造器🔖
+### 7.2 查询构造器
 
-Laravel 查询生成器使用 PDO 参数绑定来保护你的应用程序免受 SQL 注入攻击。无需清理或净化传递给查询生成器的字符串作为查询绑定。
+Laravel 查询生成器使用PDO参数绑定来保护你的应用程序免受 SQL 注入攻击。无需清理或净化传递给查询生成器的字符串作为查询绑定。
+
+> 警告：PDO 不支持绑定列名。因此，你不应该允许用户输入来决定查询引用的列名，包括 「order by」 列名。🔖
+
+#### 运行数据库查询
+
+```php
+$users = DB::table('users')->get();
+
+$user = DB::table('users')->where('name', 'Andy Ron')->first();
+
+$email = DB::table('users')->where('name', 'Andy Ron')->value('email');
+
+$user = DB::table('users')->find(2);
+
+// 获取某一列的值
+$names = DB::table('users')->pluck('name');
+foreach ($names as $name) {
+  echo $name;
+}
+```
+
+
+
+##### 分块结果
+
+
+
+##### 延迟流式处理
+
+
+
+##### 结果聚合
+
+ count， max， min，avg 和 sum
+
+##### 判断记录是否存在
+
+exists 和 doesntExist
+
+
+
+#### Select语句
+
+```php
+$users = DB::table('users')
+            ->select('name', 'email as user_email')
+            ->get();
+
+$users = DB::table('users')->distinct()->get();
+
+
+$query = DB::table('users')->select('name');
+$users = $query->addSelect('age')->get();
+```
+
+
+
+#### 原始表达式
+
+```php
+$users = DB::table('users')
+             ->select(DB::raw('count(*) as user_count, status'))
+             ->where('status', '<>', 1)
+             ->groupBy('status')
+             ->get();
+```
+
+
+
+```php
+$orders = DB::table('orders')
+                ->selectRaw('price * ? as price_with_tax', [1.0825])
+                ->get();
+```
+
+whereRaw 和 orWhereRaw
+
+havingRaw 和 orHavingRaw
+
+orderByRaw
+
+groupByRaw
+
+#### Joins
+
+##### Inner Join
+
+```php
+$users = DB::table('users')
+            ->join('contacts', 'users.id', '=', 'contacts.user_id')
+            ->join('orders', 'users.id', '=', 'orders.user_id')
+            ->select('users.*', 'contacts.phone', 'orders.price')
+            ->get();
+```
+
+##### Left Join/Right Join
+
+```php
+$users = DB::table('users')
+            ->leftJoin('posts', 'users.id', '=', 'posts.user_id')
+            ->get();
+
+$users = DB::table('users')
+            ->rightJoin('posts', 'users.id', '=', 'posts.user_id')
+            ->get();
+```
+
+##### Cross Join
+
+```php
+$sizes = DB::table('sizes')
+            ->crossJoin('colors')
+            ->get();
+```
+
+##### 高级Join语句
+
+```php
+DB::table('users')
+        ->join('contacts', function (JoinClause $join) {
+            $join->on('users.id', '=', 'contacts.user_id')
+                 ->where('contacts.user_id', '>', 5);
+        })
+        ->get();
+```
+
+
+
+##### 子连接查询
+
+```php
+// 获取含有用户最近一次发布博客时的 created_at 时间戳的用户集合
+$latestPosts = DB::table('posts')
+  ->select('user_id', DB::raw('MAX(created_at) as last_post_created_at'))
+  ->where('is_published', true)
+  ->groupBy('user_id');
+$users = DB::table('users')
+  ->joinSub($latestPosts, 'latest_posts', function (JoinClause $join) {
+    $join->on('users.id', '=', 'latest_posts.user_id');
+  })->get();
+```
+
+#### Unions
+
+```php
+$first = DB::table('posts')->whereNull('is_published');
+$unions = DB::table('posts')->whereNotNull('user_id')
+  ->union($first)->get();
+```
+
+
+
+
+
+#### 基础Where语句
+
+##### Where语句
+
+```php
+$users = DB::table('users')
+                ->where('votes', '=', 100)
+                ->where('age', '>', 35)
+                ->get();
+
+$users = DB::table('users')->where('votes', 100)->get();
+
+$users = DB::table('users')
+                ->where('name', 'like', 'T%')
+                ->get();
+
+$users = DB::table('users')->where([
+    ['status', '=', '1'],
+    ['subscribed', '<>', '1'],
+])->get();
+```
+
+##### Or Where语句
+
+链式调用多个 where 方法的时候，这些「where」语句将会被看成是 and 关系。
+
+用 orWhere 方法来表示 or 关系，它接收的参数和 where 方法接收的参数一样：
+
+```php
+$users = DB::table('users')
+                    ->where('votes', '>', 100)
+                    ->orWhere('name', 'John')
+                    ->get();
+
+$users = DB::table('users')
+            ->where('votes', '>', 100)
+            ->orWhere(function(Builder $query) {
+                $query->where('name', 'Abigail')
+                      ->where('votes', '>', 50);
+            })
+            ->get();
+```
+
+```sql
+select * from users where votes > 100 or (name = 'Abigail' and votes > 50)
+```
+
+
+
+##### Where Not语句
+
+```php
+$products = DB::table('products')
+                ->whereNot(function (Builder $query) {
+                    $query->where('clearance', true)
+                          ->orWhere('price', '<', 10);
+                })
+                ->get();
+```
+
+
+
+##### JSON Where语句🔖
+
+Laravel 也支持 JSON 类型的字段查询，前提是数据库也支持 JSON 类型。目前，有 MySQL 5.7+、PostgreSQL、SQL Server 2016 和 SQLite 3.39.0 支持 JSON 类型。可以使用 -> 操作符来查询 JSON 字段：
+
+```php
+$users = DB::table('users')
+                ->where('preferences->dining->meal', 'salad')
+                ->get();
+
+$users = DB::table('users')
+                ->whereJsonContains('options->languages', 'en')
+                ->get();
+```
+
+
+
+
+
+##### 其它Where语句
+
+whereBetween / orWhereBetween
+
+whereNotBetween / orWhereNotBetween
+
+whereBetweenColumns / whereNotBetweenColumns / orWhereBetweenColumns / orWhereNotBetweenColumns
+
+whereIn / whereNotIn / orWhereIn / orWhereNotIn
+
+whereNull / whereNotNull / orWhereNull / orWhereNotNull
+
+whereDate / whereMonth / whereDay / whereYear / whereTime
+
+whereColumn / orWhereColumn
+
+```php
+$users = DB::table('users')
+           ->whereBetween('votes', [1, 100])
+           ->get();
+
+$patients = DB::table('patients')
+                       ->whereBetweenColumns('weight', ['minimum_allowed_weight', 'maximum_allowed_weight'])
+                       ->get();
+
+$users = DB::table('users')
+                ->whereDate('created_at', '2016-12-31')
+                ->get();
+$users = DB::table('users')
+                ->whereMonth('created_at', '12')
+                ->get();
+
+// 比较两个给定字段的值是否相等
+$users = DB::table('users')
+                ->whereColumn('first_name', 'last_name')
+                ->get();
+```
+
+
+
+
+
+##### 逻辑分组
+
+有时你可能需要将括号内的几个「where」子句分组，以实现查询所需的逻辑分组。实际上应该将 orWhere 方法的调用分组到括号中，以避免不可预料的查询逻辑误差。因此可以传递闭包给 where 方法：
+
+```php
+$users = DB::table('users')
+           ->where('name', '=', 'John')
+           ->where(function (Builder $query) {
+               $query->where('votes', '>', 100)
+                     ->orWhere('title', '=', 'Admin');
+           })
+           ->get();
+```
+
+```sql
+select * from users where name = 'John' and (votes > 100 or title = 'Admin')
+```
+
+
+
+
+
+#### 高级Where语句
+
+##### Where Exists语句
+
+```php
+$users = DB::table('users')
+           ->whereExists(function (Builder $query) {
+               $query->select(DB::raw(1))
+                     ->from('orders')
+                     ->whereColumn('orders.user_id', 'users.id');
+           })
+           ->get();
+```
+
+```sql
+select * from users
+where exists (
+    select 1
+    from orders
+    where orders.user_id = users.id
+)
+```
+
+
+
+
+
+##### 子查询Where语句
+
+```php
+// 检索最后一次「会员」购买记录是「Pro」类型的所有用户
+$users = User::where(function (Builder $query) {
+    $query->select('type')
+        ->from('membership')
+        ->whereColumn('membership.user_id', 'users.id')
+        ->orderByDesc('membership.start_date')
+        ->limit(1);
+}, 'Pro')->get();
+```
+
+##### 全文Where子句
+
+需要字段有全文搜索
+
+```php
+$posts = DB::table('posts')
+            ->whereFullText('content', 'Quam')
+            ->get();
+```
+
+
+
+
+
+
+
+#### 排序、分组、限制和偏移量
+
+```php
+$users = DB::table('users')
+                ->orderBy('name', 'desc')
+                ->orderBy('email', 'asc')
+                ->get();
+
+$user = DB::table('users')
+                ->latest()
+                ->first();
+
+// 随机排序
+$randomUser = DB::table('users')
+                ->inRandomOrder()
+                ->first();
+
+// 移除已存在的排序
+$query = DB::table('users')->orderBy('name');
+$unorderedUsers = $query->reorder()->get();
+```
+
+
+
+```php
+$users = DB::table('users')
+                ->groupBy('account_id')
+                ->having('account_id', '>', 100)
+                ->get();
+
+$report = DB::table('orders')
+                ->selectRaw('count(id) as number_of_orders, customer_id')
+                ->groupBy('customer_id')
+                ->havingBetween('number_of_orders', [5, 15])
+                ->get();
+```
+
+
+
+限制和偏移量
+
+```php
+$users = DB::table('users')
+                ->offset(10)
+                ->limit(5)
+                ->get();
+```
+
+ limit 和 offset 方法等同于 take 和 skip
+
+#### 条件语句
+
+根据另一个条件将某些查询子句应用于查询。例如，当传入 HTTP 请求有一个给定的值的时候你才需要使用一个 where 语句。你可以使用 when 方法去实现:
+
+```php
+$role = $request->string('role');
+
+$users = DB::table('users')
+                ->when($role, function (Builder $query, string $role) {
+                    $query->where('role_id', $role);
+                })
+                ->get();
+```
+
+when 方法只有当第一个参数为 true 时才执行给定的闭包。如果第一个参数是 false ，闭包将不会被执行。因此，在上面的例子中，只有在传入的请求包含 role 字段且结果为 true 时，when 方法里的闭包才会被调用。
+你可以将另一个闭包作为第三个参数传递给 when 方法。这个闭包则旨在第一个参数结果为 false 时才会执行。为了说明如何使用该功能，我们将使用它来配置查询的默认排序：
+
+```php
+$sortByVotes = $request->boolean('sort_by_votes');
+
+$users = DB::table('users')
+                ->when($sortByVotes, function (Builder $query, bool $sortByVotes) {
+                    $query->orderBy('votes');
+                }, function (Builder $query) {
+                    $query->orderBy('name');
+                })
+                ->get();
+```
+
+
+
+
+
+#### 插入语句
+
+```php
+DB::table('users')->insert([
+    'email' => 'kayla@example.com',
+    'votes' => 0
+]);
+
+DB::table('users')->insert([
+    ['email' => 'picard@example.com', 'votes' => 0],
+    ['email' => 'janeway@example.com', 'votes' => 0],
+]);
+
+// 重复记录插入的错误和其他类型的错误都将被忽略，这取决于数据库引擎
+DB::table('users')->insertOrIgnore([
+    ['id' => 1, 'email' => 'sisko@example.com'],
+    ['id' => 2, 'email' => 'archer@example.com'],
+]);
+
+DB::table('pruned_users')->insertUsing([
+    'id', 'name', 'email', 'email_verified_at'
+], DB::table('users')->select(
+    'id', 'name', 'email', 'email_verified_at'
+)->where('updated_at', '<=', now()->subMonth()));
+
+// 获取自增ID 
+$id = DB::table('users')->insertGetId(
+    ['email' => 'john@example.com', 'votes' => 0]
+);
+```
+
+
+
+##### 更新插入 🔖
+
+upsert 方法是是插入不存在的记录和为已经存在记录更新值。
+
+第一个参数包含要插入或更新的值，
+
+第二个参数列出了在关联表中唯一标识记录的列。 
+
+第三个参数是一个列数组，如果数据库中已经存在匹配的记录，则应该更新这些列。
+
+```php
+DB::table('flights')->upsert(
+    [
+        ['departure' => 'Oakland', 'destination' => 'San Diego', 'price' => 99],
+        ['departure' => 'Chicago', 'destination' => 'New York', 'price' => 150]
+    ],
+    ['departure', 'destination'],
+    ['price']
+);
+```
+
+在上面的例子中，Laravel 会尝试插入两条记录。如果已经存在具有相同 departure 和 destination 列值的记录，Laravel 将更新该记录的 price 列。
+
+
+
+#### 更新语句
+
+##### 更新JSON列
+
+
+
+##### 自增和自减
+
+
+
+
+
+#### 删除语句
+
+delete方法返回受影响的行数。
+
+truncate 方法将从表中删除所有记录并将自动递增 ID 重置为零。
+
+#### 悲观锁 🔖
+
+```php
+DB::table('users')
+        ->where('votes', '>', 100)
+        ->sharedLock()
+        ->get();
+
+DB::table('users')
+        ->where('votes', '>', 100)
+        ->lockForUpdate()
+        ->get();
+```
+
+
+
+#### 调试
+
+dd方法将显示调试信息，然后停止执行请求。 dump 方法将显示调试信息，但允许请求继续执行：
+
+```php
+DB::table('users')->where('votes', '>', 100)->dd();
+
+DB::table('users')->where('votes', '>', 100)->dump();
+```
 
 
 
@@ -2681,9 +3229,266 @@ Laravel 查询生成器使用 PDO 参数绑定来保护你的应用程序免受 
 
 ### 7.4 数据库迁移
 
+迁移就像数据库的版本控制，允许你的团队定义和共享应用程序的数据库架构定义。 如果你曾经不得不告诉团队成员在从代码控制中拉取更新后手动添加字段到他们的本地数据库，那么你就遇到了数据库迁移解决的问题。
+Laravel Schema facade 为所有 Laravel 支持的数据库系统的创建和操作表提供了不依赖于数据库的支持。通常情况下，迁移会使用 facade 来创建和修改数据表和字段。
+
+#### 生成迁移
+
+每个迁移文件名都包含一个时间戳来使 Laravel 确定迁移的顺序：
+
+```sh
+php artisan make:migration create_flights_table
+```
+
+Laravel 将使用迁移文件的名称来猜测表名以及迁移是否会创建一个新表。如果 Laravel 能够从迁移文件的名称中确定表的名称，它将在生成的迁移文件中预填入指定的表，或者，你也可以直接在迁移文件中手动指定表名。
+
+#### 整合迁移
+
+在构建应用程序时，可能会随着时间的推移积累越来越多的迁移。这可能会导致你的 database/migrations 目录因为数百次迁移而变得臃肿。你如果愿意的话，可以将迁移「压缩」到单个 SQL 文件中。如果你想这样做，请先执行 schema:dump 命令：
+
+```sh
+php artisan schema:dump
+
+# 转储当前数据库架构并删除所有现有迁移...
+php artisan schema:dump --prune
+```
+
+#### 迁移结构
+
+迁移类继承至`Illuminate\Database\Migrations\Migration`，包含两个方法：up 和 down 。up 方法用于向数据库中添加新表、列或索引，而 down 方法用于撤销 up 方法执行的操作。.
+
+```php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * 执行迁移
+     */
+    public function up(): void
+    {
+        Schema::create('flights', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('airline');
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * 回滚迁移
+     */
+    public function down(): void
+    {
+        Schema::drop('flights');
+    }
+};
+```
+
+##### 设置迁移连接
+
+$connection属性：
+
+#### 执行迁移
+
+```sh
+php artisan migrate
+
+# 查看目前已经执行了哪些迁移
+php artisan migrate:status
+
+# 在不实际运行迁移的情况下看到将被执行的 SQL 语句
+php artisan migrate --pretend
+```
+
+
+
+##### 在隔离的环境中执行迁移
+
+如果你在多个服务器上部署你的应用程序，并在部署过程中运行迁移，你可能不希望两个服务器同时尝试迁移数据库。为了避免这种情况，你可以在调用 migrate 命令时使用 isolated 选项。
+
+当提供 isolated 选项时，Laravel 将使用你的应用程序缓存驱动获得一个原子锁，然后再尝试运行你的迁移。所有其他试图运行 migrate 命令的尝试在锁被持有时都不会执行；然而，命令仍然会以成功的退出状态码退出:
+`php artisan migrate --isolatedCopy`
+
+> 注意要使用这个功能，你的应用程序必须使用 memcached / redis / dynamodb / database / file  或 array 缓存驱动作为你应用程序的默认缓存驱动。此外，所有的服务器必须与同一个中央缓存服务器进行通信。
+
+
+
+##### 在生产环境中执行强制迁移
+
+```sh
+php artisan migrate --force
+```
+
+##### 回滚迁移
+
+
+
+```sh
+# 回滚最后一次迁移操作
+php artisan migrate:rollback
+
+# 回滚最后五个迁移
+php artisan migrate:rollback --step=5
+
+php artisan migrate:rollback --batch=3
+
+php artisan migrate:reset
+```
+
+
+
+##### 使用单个命令同时进行回滚和迁移操作
+
+```sh
+php artisan migrate:refresh
+
+# 重置数据库，并运行所有的 seeds...
+php artisan migrate:refresh --seed
+
+php artisan migrate:refresh --step=5
+```
+
+##### 删除所有表然后执行迁移
+
+```sh
+php artisan migrate:fresh
+
+php artisan migrate:fresh --seed
+```
+
+
+
+#### 数据表
+
+##### 创建
+
+```php
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+Schema::create('users', function (Blueprint $table) {
+    $table->id();
+    $table->string('name');
+    $table->string('email');
+    $table->timestamps();
+  
+  	$table->engine = 'InnoDB';
+  	$table->charset = 'utf8mb4';
+    $table->collation = 'utf8mb4_unicode_ci';
+  
+  	$table->temporary();  // 临时表仅对当前连接的数据库会话可见，当连接关闭时会自动删除
+  
+  	$table->comment('Business calculations');
+});
+
+
+
+
+
+```
+
+
+
+```php
+if (Schema::hasTable('users')) {
+    // 「users」表存在...
+}
+if (Schema::hasColumn('users', 'email')) {
+    // 「users」表存在，并且有「email」列...
+}
+```
+
+##### 更新
+
+```php
+Schema::table('users', function (Blueprint $table) {
+    $table->integer('votes');
+});
+```
+
+##### 重命名 / 删除表
+
+```php
+Schema::rename($from, $to);
+
+Schema::drop('users');
+
+Schema::dropIfExists('users');
+```
+
+
+
+#### 字段
+
+
+
+#### 索引
+
+```php
+$table->string('email')->unique();
+
+$table->unique('email');
+
+// 复合（或合成）索引
+$table->index(['account_id', 'created_at']);
+
+// 自定义索引名称
+$table->unique('email', 'unique_email');
+```
+
+
+
+| 命令                                            | 描述                                           |
+| ----------------------------------------------- | ---------------------------------------------- |
+| `$table->primary('id')`                         | 添加一个主键。                                 |
+| `$table->primary(['id', 'parent_id'])`          | 添加复合主键。                                 |
+| `$table->unique('email')`                       | 添加一个唯一索引。                             |
+| `$table->index('state')`                        | 添加一个普通索引。                             |
+| `$table->fullText('body')`                      | 添加一个全文索引（仅适用于MySQL/PostgreSQL）。 |
+| `$table->fullText('body')->language('english')` | 添加指定语言的全文索引（仅适用于PostgreSQL）。 |
+| `$table->spatialIndex('location')`              | 添加一个空间索引（SQLite除外）。               |
+
+
+
+#### 事件 🔖
+
+为方便起见，每个迁移操作都会触发一个事件。以下所有事件都扩展了基础`Illuminate\Database\Events\MigrationEvent` 类：
+
+| 类                                             | 描述                       |
+| ---------------------------------------------- | -------------------------- |
+| `Illuminate\Database\Events\MigrationsStarted` | 要执行一批迁移。           |
+| `Illuminate\Database\Events\MigrationsEnded`   | 一批迁移已完成。           |
+| `Illuminate\Database\Events\MigrationStarted`  | 要执行单个迁移。           |
+| `Illuminate\Database\Events\MigrationEnded`    | 单个迁移已完成。           |
+| `Illuminate\Database\Events\SchemaDumped`      | 数据库模式转储已完成。     |
+| `Illuminate\Database\Events\SchemaLoaded`      | 已加载现有数据库模式转储。 |
+
 
 
 ### 7.5 数据填充
+
+Laravel 内置了一个可为你的数据库填充测试数据的数据填充类。所有的数据填充类都应该放在 `database/seeds` 目录下。Laravel 默认定义了一个 DatabaseSeeder 类。通过这个类，你可以用 call 方法来运行其他的 seed 类，从而控制数据填充的顺序。
+
+#### 编写 Seeders
+
+```sh
+php artisan make:seeder UserSeeder
+```
+
+🔖
+
+#### 运行 Seeders
+
+```sh
+php artisan db:seed
+
+php artisan db:seed --class=UserSeeder
+```
 
 
 
@@ -2886,6 +3691,8 @@ Laravel 针对事件、任务和 Facades 的模拟，提供了开箱即用的辅
 
 
 ## 10 官方扩展包
+
+扩展包学习：https://laravelacademy.org/books/laravel-packages
 
 ### 交易工具包 (Stripe)
 

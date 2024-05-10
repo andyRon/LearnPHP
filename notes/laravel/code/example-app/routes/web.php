@@ -44,7 +44,13 @@ Route::get('/counter', Counter::class);
 require __DIR__.'/auth.php';
 
 
-Route::get('/test', function () {
+Route::get('/test', function (\Illuminate\Http\Request $request) {
+    dump($request->all());
+    dump("URL: ". $request->path());
+    dump("Scheme: ", $request->getScheme());
+    foreach ($request->all() as $key => $value) {
+        dump($key . ':'. $value);
+    }
     return 'hello world!';
 });
 
@@ -225,3 +231,6 @@ Route::get('encrypt', function () {
         echo '密码正确';
     }
 });
+
+
+require __DIR__ . '/myroutes.php';

@@ -3500,23 +3500,482 @@ php artisan db:seed --class=UserSeeder
 
 ## 8 Eloquent ORM
 
-Laravel 包含的 Eloquent 模块，是一个对象关系映射 (ORM)，能使你更愉快地交互数据库。当你使用 Eloquent 时，数据库中每张表都有一个相对应的” 模型” 用于操作这张表。除了能从数据表中检索数据记录之外，Eloquent 模型同时也允许你新增，更新和删除这对应表中的数据
+### 8.1 快速入门
+
+使用 Eloquent 时，数据库中每张表都有一个相对应的” 模型” 用于操作这张表。除了能从数据表中检索数据记录之外，Eloquent还可以更新和删除这对应表中的数据。
+
+#### 生成模型类
+
+```sh
+php artisan make:model Flight
+
+php artisan make:model Flight --migration
+
+
+# 生成模型和 Flight 工厂类...
+php artisan make:model Flight --factory
+php artisan make:model Flight -f
+
+# 生成模型和 Flight 数据填充类...
+php artisan make:model Flight --seed
+php artisan make:model Flight -s
+
+# 生成模型和 Flight 控制器类...
+php artisan make:model Flight --controller
+php artisan make:model Flight -c
+
+# 生成模型，Flight 控制器类，资源类和表单验证类...
+php artisan make:model Flight --controller --resource --requests
+php artisan make:model Flight -crR
+
+# 生成模型和 Flight 授权策略类...
+php artisan make:model Flight --policy
+
+# 生成模型和数据库迁移，Filght 工厂类，数据库填充类和 Flight 控制器...
+php artisan make:model Flight -mfsc
+
+# 快捷生成模型，数据库迁移，Flight 工厂类，数据库填充类，授权策略类，Flight 控制器和表单验证类...
+php artisan make:model Flight --all
+
+# 生成中间表模型...
+php artisan make:model Member --pivot
+```
+
+检查模型
+
+```sh
+php artisan model:show Flight
+```
 
 
 
-### 模型关联
+#### Eloquent模型约定
+
+##### 表名
+
+默认类名称的下划线格式的复数形态将被用作表名，`$table`属性可修改。
+
+
+
+##### 主键
+
+默认是`id`，属性`$primaryKey`修改。
+
+`$primaryKey` 属性
+
+`$keyType`
+
+> Eloquent不支持「复合」主键。但是，除了表的唯一标识主键之外，还可以向数据库表添加额外的**多列唯一索引**。
+
+##### UUID与ULID键
+
+`Illuminate\Database\Eloquent\Concerns\HasUuids`
+
+`Illuminate\Database\Eloquent\Concerns\HasUlids`
+
+
+
+##### 时间戳
+
+```php
+class Flight extends Model
+{
+    /**
+     * 指示模型是否主动维护时间戳。
+     *
+     * @var bool
+     */
+    public $timestamps = false;
+}
+```
+
+自定义模型时间戳的格式，请在模型上设置 $dateFormat 属性
+
+
+
+##### 数据库连接
+
+```php
+class Flight extends Model
+{
+    /**
+     * 设置当前模型使用的数据库连接名。
+     *
+     * @var string
+     */
+    protected $connection = 'sqlite';
+}
+```
+
+
+
+##### 默认属性值
+
+```php
+class Flight extends Model
+{
+    /**
+     * 模型的属性默认值。
+     *
+     * @var array
+     */
+    protected $attributes = [
+        'options' => '[]',
+        'delayed' => false,
+    ];
+}
+```
+
+##### 严格配置Eloquent 🔖
+
+```php
+/**
+ * 启动任意应用程序服务。
+ */
+public function boot(): void
+{
+    Model::preventLazyLoading(! $this->app->isProduction());
+}
+```
 
 
 
 
 
-### Eloquent集合
+#### 模型检索
+
+```php
+Flight::all()
+  
+$flights = Flight::where('active', 1)
+               ->orderBy('name')
+               ->take(10)
+               ->get();
+```
+
+
+
+##### 刷新模型 🔖
+
+
+
+##### 集合
+
+all 和 get等方法从数据库中检索的结果不是PHP数组，而是`Illuminate\Database\Eloquent\Collection`。
+
+Eloquent Collection 类扩展了 Laravel 的 Illuminate\Support\Collection 基类，它提供了大量的辅助方法来与数据集合交互。例如，reject 方法可用于根据调用闭包的结果从集合中删除模型：
+
+```php
+$flights = Flight::where('destination', 'Paris')->get();
+
+$flights = $flights->reject(function (Flight $flight) {
+    return $flight->cancelled;
+});
+```
+
+
+
+##### 结果分块
+
+```php
+Flight::chunk(200, function (Collection $flights) {
+    foreach ($flights as $flight) {
+        // ...
+    }
+});
+
+// 分块的同时更新
+Flight::where('departed', true)
+    ->chunkById(200, function (Collection $flights) {
+        $flights->each->update(['departed' => false]);
+    }, $column = 'id');
+```
+
+
+
+##### 使用懒加载集合分块🔖
+
+
+
+##### 游标
+
+
+
+##### 高级子查询
+
+```php
+return Destination::addSelect(['last_flight' => Flight::select('name')
+    ->whereColumn('destination_id', 'destinations.id')
+    ->orderByDesc('arrived_at')
+    ->limit(1)
+])->get();
+
+return Destination::orderByDesc(
+    Flight::select('arrived_at')
+        ->whereColumn('destination_id', 'destinations.id')
+        ->orderByDesc('arrived_at')
+        ->limit(1)
+)->get();
+```
+
+
+
+#### 检索单个模型/聚合
+
+```php
+use App\Models\Flight;
+
+// 通过主键检索模型...
+$flight = Flight::find(1);
+
+// 检索与查询约束匹配的第一个模型...
+$flight = Flight::where('active', 1)->first();
+
+// 替代检索与查询约束匹配的第一个模型...
+$flight = Flight::firstWhere('active', 1);
+```
+
+```php
+$flight = Flight::findOr(1, function () {
+    // ...
+});
+
+$flight = Flight::where('legs', '>', 3)->firstOr(function () {
+    // ...
+});
+```
+
+##### 未找到时抛出异常
+
+```php
+$flight = Flight::findOrFail(1);
+
+$flight = Flight::where('legs', '>', 3)->firstOrFail();
+```
+
+`Illuminate\Database\Eloquent\ModelNotFoundException`
+
+
+
+##### 检索或创建模型
+
+```php
+use App\Models\Flight;
+
+// 按名称检索航班，如果不存在则创建它...
+$flight = Flight::firstOrCreate([
+    'name' => 'London to Paris'
+]);
+
+// 按名称检索航班或使用名称、延迟和到达时间属性创建它...
+$flight = Flight::firstOrCreate(
+    ['name' => 'London to Paris'],
+    ['delayed' => 1, 'arrival_time' => '11:30']
+);
+
+// 按名称检索航班或实例化一个新的航班实例...
+$flight = Flight::firstOrNew([
+    'name' => 'London to Paris'
+]);
+
+// 按名称检索航班或使用名称、延迟和到达时间属性实例化...
+$flight = Flight::firstOrNew(
+    ['name' => 'Tokyo to Sydney'],
+    ['delayed' => 1, 'arrival_time' => '11:30']
+);
+```
+
+
+
+##### 检索聚合
+
+```php
+$count = Flight::where('active', 1)->count();
+
+$max = Flight::where('active', 1)->max('price');
+```
+
+
+
+#### 新增&更新模型
+
+
+
+```php
+$flight = new Flight;
+$flight->name = $request->name;
+$flight->save();
+
+
+$flight = Flight::create([
+    'name' => 'London to Paris',
+]);
+
+
+$flight = Flight::find(1);
+$flight->name = 'Paris to London';
+$flight->save();
+
+
+// 批量更新
+Flight::where('active', 1)
+      ->where('destination', 'San Diego')
+      ->update(['delayed' => 1]);
+```
+
+
+
+##### 检查属性变更🔖
+
+Eloquent 提供了 `isDirty`、`isClean` 和 `wasChanged` 方法来检查模型的内部状态，并确定它的属性与最初检索模型时的变化情况。
+
+getOriginal 方法返回一个包含模型原始属性的数组，忽略加载模型之后进行的任何更改。
+
+##### 批量赋值
+
+
+
+```php
+class Flight extends Model
+{
+    /**
+     * 可批量赋值的属性。
+     *
+     * @var array
+     */
+    protected $fillable = ['name'];
+}
+```
+
+
+
+```php
+/**
+ * 可以批量赋值的属性。
+ *
+ * @var array
+ */
+protected $fillable = [
+    'options->enabled',
+];
+
+/**
+ * 不可以批量赋值的属性。
+ *
+ * @var array
+ */
+protected $guarded = [];
+```
+
+
+
+`preventSilentlyDiscardingAttributes()`
+
+##### 新增或更新
+
+```php
+$flight = Flight::updateOrCreate(
+    ['departure' => 'Oakland', 'destination' => 'San Diego'],
+    ['price' => 99, 'discounted' => 1]
+);
+```
+
+
+
+#### 删除模型🔖
+
+##### 软删除
+
+
+
+##### 查询已被软删除模型
+
+
+
+#### 修剪模型 🔖
+
+`Illuminate\Database\Eloquent\Prunable` 或 `Illuminate\Database\Eloquent\MassPrunable` 
+
+```php
+class Flight extends Model
+{
+    use Prunable;
+
+    /**
+     * 获取可修剪模型查询构造器。
+     */
+    public function prunable(): Builder
+    {
+        return static::where('created_at', '<=', now()->subMonth());
+    }
+}
+```
+
+
+
+#### 复制模型
+
+可以使用 `replicate` 方法创建现有模型实例的未保存副本。在拥有共享许多相同属性的模型实例时，此方法特别有用：
+
+```php
+use App\Models\Address;
+
+$shipping = Address::create([
+    'type' => 'shipping',
+    'line_1' => '123 Example Street',
+    'city' => 'Victorville',
+    'state' => 'CA',
+    'postcode' => '90001',
+]);
+
+$billing = $shipping->replicate()->fill([
+    'type' => 'billing'
+]);
+
+$billing->save();
+```
+
+要排除一个或多个属性被复制到新模型，可以将数组传递给 replicate 方法：
+
+```php
+$flight = Flight::create([
+    'destination' => 'LAX',
+    'origin' => 'LHR',
+    'last_flown' => '2020-03-04 11:00:00',
+    'last_pilot_id' => 747,
+]);
+
+$flight = $flight->replicate([
+    'last_flown',
+    'last_pilot_id'
+]);
+```
+
+
+
+#### 查询作用域
+
+全局作用域
+
+
+
+局部作用域
+
+
+
+#### 模型对比
+
+is 和 isNot 方法可以用来快速校验两个模型是否拥有相同的主键、表和数据库连接。
+
+#### 事件 🔖
+
+Eloquent 模型触发几个事件，允许你挂接到模型生命周期的如下节点： retrieved、creating、created、updating、updated、saving、saved、deleting、deleted、restoring、restored、replicating。事件允许你每当特定模型保存或更新数据库时执行代码。每个事件通过其构造器接受模型实例。
 
 
 
 
 
-### 属性修改器
+使用闭包方法观察者静默事件
 
 
 
@@ -3524,21 +3983,248 @@ Laravel 包含的 Eloquent 模块，是一个对象关系映射 (ORM)，能使�
 
 
 
-### API资源
+### 8.2 模型关联 🔖
+
+
+
+#### 定义关联
+
+##### 一对一
+
+##### 一对多
+
+##### 一对多 (反向)/ 属于
+
+##### 一对多检索
+
+##### 远程一对一
+
+##### 远程一对多
+
+
+
+#### 多对多关联
+
+##### 获取中间表字段
+
+##### 通过中间表字段过滤查询
+
+##### 通过中间表字段排序查询
+
+##### 自定义中间表模型
 
 
 
 
 
-### 序列化
+#### 多态关联
+
+##### 一对一
+
+##### 一对多
+
+##### 一对多检索
+
+##### 多对多
+
+##### 自定义多态模型
 
 
 
 
 
-### Eloquent数据工厂
+#### 动态关联
 
 
+
+#### 查询关联
+
+##### 关联方法与动态属性
+
+##### 基于存在的关联查询
+
+##### 基于不存在的关联查询
+
+##### 基于多态的关联查询
+
+
+
+
+
+#### 统计关联模型
+
+##### 关联模型计数
+
+##### 其他统计函数
+
+##### 多态关联数据计数
+
+
+
+#### 预加载
+
+##### 约束预加载
+
+##### 延迟预加载
+
+##### 阻止延迟加载
+
+
+
+#### 插入及更新关联模型
+
+##### save方法 
+
+##### create方法
+
+##### 属于关联
+
+##### 多对多关联
+
+
+
+#### 更新父级时间戳
+
+
+
+
+
+### 8.3 Eloquent集合
+
+
+
+
+
+
+
+
+
+### 8.4 属性修改器
+
+当你在 Eloquent 模型实例中获取或设置某些属性值时，访问器和修改器允许你对 Eloquent 属性值进行格式化。例如，你可能需要使用[Laravel加密器](https://learnku.com/docs/laravel/10.x/encryption/14879) 来加密保存在数据库中的值，而在使用 Eloquent 模型访问该属性的时候自动进行解密其值。
+
+或者，当通过 Eloquent 模型访问存储在数据库的 JSON 字符串时，你可能希望将其转换为数组。
+
+
+
+
+
+### 8.5 API资源
+
+在构建 API 时，你往往需要一个转换层来联结你的 Eloquent 模型和实际返回给用户的 JSON 响应。比如，你可能希望显示部分用户属性而不是全部，或者你可能希望在模型的 JSON 中包括某些关系。Eloquent 的资源类能够让你以更直观简便的方式将模型和模型集合转化成 JSON。
+
+当然，你可以始终使用 Eloquent 模型或集合的 toJson 方法将其转换为 JSON ；但是，Eloquent 的资源提供了对模型及其关系的 JSON 序列化更加精细和更加健壮的控制。
+
+```php
+php artisan make:resource UserResource
+```
+
+默认情资源将放在`app/Http/Resources`
+
+
+
+### 8.6 序列化
+
+
+
+```php
+$user = User::with('roles')->first();
+
+$user->toArray();
+
+// 不会转换其关联
+$user->attributesToArray();
+
+
+$user->toJson();
+```
+
+
+
+#### 隐藏JSON属性
+
+有时要将模型数组或 JSON 中的某些属性进行隐藏，比如密码。则可以在模型中添加 $hidden 属性。
+
+```php
+class User extends Model
+{
+    /**
+     * 数组中的属性会被隐藏。
+     *
+     * @var array
+     */
+    protected $hidden = ['password'];
+}
+```
+
+也可以使用属性 visible 定义一个模型数组和 JSON 可见的「白名单」。转化后的数组或 JSON 不会出现其他的属性。
+
+
+
+临时修改可见属性：
+
+```php
+return $user->makeVisible('attribute')->toArray();
+
+return $user->makeHidden('attribute')->toArray();
+
+return $user->setVisible(['id', 'name'])->toArray();
+
+return $user->setHidden(['email', 'password', 'remember_token'])->toArray();
+```
+
+
+
+#### 追加JSON值
+
+有时，需要在模型转换为数组或 JSON 时添加一些数据库中不存在字段的对应属性。
+
+```php
+class User extends Model
+{
+    /**
+     * 属性访问器
+     * 判断用户是否是管理员。
+     */
+    protected function isAdmin(): Attribute
+    {
+        return new Attribute(
+            get: fn () => 'yes',
+        );
+    }
+  	/**
+     * 要附加到模型数组表单的访问器。
+     *
+     * @var array
+     */
+    protected $appends = ['is_admin'];
+}
+```
+
+使用 `appends` 方法追加属性后，它将包含在模型的数组和 JSON 中。`appends` 数组中的属性也将遵循模型上配置的 `visible` 和 `hidden` 设置。
+
+
+
+运行时追加：
+
+```php
+return $user->append('is_admin')->toArray();
+return $user->setAppends(['is_admin'])->toArray();
+```
+
+
+
+#### 日期序列化
+
+
+
+
+
+### 8.7 Eloquent数据工厂 🔖
+
+当测试你的应用程序或向数据库填充数据时，你可能需要插入一些记录到数据库中。Laravel 允许你使用模型工厂为每个 [Eloquent 模型](https://learnku.com/docs/laravel/10.x/eloquent)定义一组默认属性，而不是手动指定每个列的值。
+
+`database/factories/`
 
 
 

@@ -85,7 +85,7 @@ class DbController extends Controller
         $client->set('foo', 'bar');
         $value = $client->get('foo');
         dump($value);
-        
+
         // TODO   You have a missing class import. Try importing this class: Illuminate\Support\Facades\Redis
 //        Redis::set('name', 'Taylor');
 //

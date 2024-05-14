@@ -1,9 +1,13 @@
 <?php
 
-namespace App\Http\controller;
+namespace App\Http\Controller;
 
 use App\Http\Response;
+use App\Model\User;
 
+/**
+ * 后台用户认证
+ */
 class AuthController extends Controller
 {
     public function login()

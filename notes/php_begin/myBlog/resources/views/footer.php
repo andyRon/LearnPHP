@@ -29,7 +29,7 @@
                         </a>
                     </li>
                 </ul>
-                <p class="copyright text-muted">Copyright © <?=$siteName?> 2020</p>
+                <p class="copyright text-muted">Copyright © <?= $siteName . ' ' . date('Y') ?></p>
             </div>
         </div>
     </div>

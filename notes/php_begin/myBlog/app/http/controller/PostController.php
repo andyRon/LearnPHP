@@ -1,5 +1,5 @@
 <?php
-namespace App\Http\controller;
+namespace App\Http\Controller;
 
 use App\Model\Post;
 use App\Printer\PrinterContract;

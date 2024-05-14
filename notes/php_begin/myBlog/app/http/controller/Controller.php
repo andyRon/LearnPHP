@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\controller;
+namespace App\Http\Controller;
 
 use App\Core\Container;
 use App\Http\Request;
@@ -34,6 +34,7 @@ class Controller
     protected Session $session;
 
     protected $siteName;
+
     public function __construct()
     {
         $this->container = Container::getInstance();

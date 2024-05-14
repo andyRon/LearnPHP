@@ -10,7 +10,7 @@ namespace App\Http;
  */
 class Route
 {
-    public string $methods;
+    public array $methods;
     public string $uri;
     public string $action;
     public string $params;

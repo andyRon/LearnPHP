@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\controller;
+namespace App\Http\Controller;
 
 use App\Model\Album;
 
@@ -18,9 +18,10 @@ class AlbumController extends Controller
         }
         $album = Album::with('posts')->findOrFail($id)->toArray();
         $posts = $album['posts'];
+
         // TODO
         array_walk($posts, function (&$post) {
-            $post['summary'] = mb_substr(strip_tags($post['html']), 0, 81) . '...';
+            $post['summary'] = empty($post['text']) ? '' : mb_substr(strip_tags($post['text']), 0, 81) . '...';
         });
         $pageTitle = $album['title'] . ' - ' . $this->siteName;
         $siteName = $this->siteName;

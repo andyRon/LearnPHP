@@ -2,7 +2,7 @@
 
 return [
     'app' => [
-        'name' => 'andyron的个人网站',
+        'name' => "andy的博客",
         'desc' => '让学习与进取者不再孤独',
         'url'  => 'http://andyron.top',
         'basePath' => __DIR__ . '/../../',
@@ -13,12 +13,13 @@ return [
 
                 ],
                 'mysql' => [
+                    'driver' => 'mysql',
                     'host' => '127.0.0.1',
                     'port' => 3306,
-                    'dbname' => 'my_blog',
+                    'database' => 'my_blog',
+                    'username' => 'root',
+                    'password' => '33824',
                     'charset' => 'utf8mb4',
-                    'user' => 'root',
-                    'password' => 'root',
                     'collation' => 'utf8mb4_general_ci',
                     'prefix'    => '',
                 ]

@@ -5,5 +5,11 @@ namespace App\View;
  */
 interface ViewEngine
 {
+    /**
+     * 视图模板的解析和PHP变量替换
+     * @param $path
+     * @param $data
+     * @return string
+     */
     public function extract($path, $data): string;
 }

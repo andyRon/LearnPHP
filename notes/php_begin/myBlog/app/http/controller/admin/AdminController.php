@@ -4,6 +4,9 @@ namespace App\Http\Controller\Admin;
 use App\Http\Controller\Controller;
 use App\Model\Message;
 
+/**
+ * 后台控制器基类
+ */
 class AdminController extends Controller
 {
     protected $messages;

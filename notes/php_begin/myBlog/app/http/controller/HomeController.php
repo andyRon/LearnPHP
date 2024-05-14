@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Http\controller;
+namespace App\Http\Controller;
 
-use App\Http\controller\Controller;
-use App\Http\exception\ValidationException;
+use App\Http\Exception\ValidationException;
 use App\Http\Response;
 use App\Model\Album;
 use App\Model\Message;
@@ -17,6 +16,7 @@ class HomeController extends Controller
     public function index(): void
     {
         $albums = Album::all()->toArray();
+
         $pageTitle = $siteName = $this->siteName;
         $siteUrl = $this->container->resolve('app.url');
         $siteDesc = $this->container->resolve('app.desc');
@@ -31,10 +31,14 @@ class HomeController extends Controller
         ]);
     }
 
-    public function about(): void
+    public function about(): void  // TODO
     {
-        $response = new Response('', 301, ['Location' => 'https://andyron.top/about']);
-        $response->send();
+        $this->view->render('about.php', [
+            'pageTitle' => 'xxx',
+//            'siteDesc' => $this->siteDesc,
+            'siteName' => $this->siteName,
+//            'siteUrl' => $this->siteUrl,
+        ]);
     }
 
     /**

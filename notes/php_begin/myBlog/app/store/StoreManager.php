@@ -29,6 +29,7 @@ class StoreManager
         if (!method_exists($this, $factoryMethod)) {
             throw new \Exception('对应的数据库驱动不支持！');
         }
+
         // 通过简单工厂模式创建驱动实例
         return $this->connections[$driver] = call_user_func([$this, $factoryMethod]); // TODO
     }

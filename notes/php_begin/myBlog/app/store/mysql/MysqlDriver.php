@@ -12,20 +12,21 @@ class MysqlDriver implements StoreContract
 
     public function __construct($options)
     {
+//        var_dump($options);die();
         $host = $options['host'];
         $port = isset($options['port']) ? $options['port'] : 3306;
-        $dbname = $options['dbname'];
+        $database = $options['database'];
         $charset = isset($options['charset']) ? $options['charset'] : 'utf8';
-        $dsn = sprintf("mysql:host=%s;port=%s;dbname=%s;charset=%s", $host, $port, $dbname, $charset);
-        $user = $options['user'];
+        $dsn = sprintf("mysql:host=%s;port=%s;dbname=%s;charset=%s", $host, $port, $database, $charset);
+        $username = $options['username'];
         $password = $options['password'];
-        $this->options = compact('dsn', 'user', 'password');
+        $this->options = compact('dsn', 'username', 'password');
     }
 
 
     public function newConnection()
     {
-        $this->connection = new \PDO($this->options['dsn'], $this->options['user'], $this->options['password']);
+        $this->connection = new \PDO($this->options['dsn'], $this->options['username'], $this->options['password']);
         return $this;
     }
 
@@ -93,7 +94,7 @@ class MysqlDriver implements StoreContract
         if (empty($options['host'])) {
             throw new \Exception('数据库主机不能为空');
         }
-        if (empty($options['dbname'])) {
+        if (empty($options['database'])) {
             throw new \Exception('数据库名称不能为空');
         }
         if (empty($options['user'])) {

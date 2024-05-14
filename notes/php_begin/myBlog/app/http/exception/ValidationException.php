@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\exception;
+namespace App\Http\Exception;
 
 class ValidationException extends \Exception
 {

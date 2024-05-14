@@ -6,6 +6,7 @@ $router = new \App\Http\Router();
 //$connection = $store->newConnection();
 $request = $container->resolve('request');
 
+
 //$router->register('get', '/', function () use ($container, $connection) {
 //    $albums = $connection->table('albums')->selectAll();
 //    include __DIR__  . "/../../views/home.php";
@@ -89,5 +90,6 @@ $router->register(['get', 'post'], 'admin/post/edit', 'Admin\PostController@edit
 $router->register(['post'], 'admin/post/delete', 'Admin\PostController@delete');
 
 $router->register('post', 'admin/message/delete', 'Admin\MessageController@delete');
+
 
 return $router;

@@ -12,13 +12,10 @@ $container->bind('session', $session);
 $request = \App\Http\Request::capture();
 $container->bind('request', $request);
 
-//print_r($container);die();
-
 // 注册路由
 $router = require_once __DIR__ . '/../app/routes/web.php';
 
-print_r($router);die();
-
+//print_r($router);die();
 
 // 路由分发、处理请求、返回响应
 $router->dispatch($request);

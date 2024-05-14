@@ -2,6 +2,9 @@
 
 namespace App\View;
 
+use Exception;
+use Throwable;
+
 /**
  * PHP原生视图模板引擎的实现
  */
@@ -9,7 +12,7 @@ class PhpEngine implements ViewEngine
 {
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function extract($path, $data): string
     {
@@ -23,8 +26,8 @@ class PhpEngine implements ViewEngine
 
         try {
             include $path;
-        } catch (\Throwable $e) {
-            throw new \Exception('解析视图模版出错：' . $e->getMessage());
+        } catch (Throwable $e) {
+            throw new Exception('解析视图模版出错：' . $e->getMessage());
         }
         return ltrim(ob_get_clean());
     }

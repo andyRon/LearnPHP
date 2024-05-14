@@ -35,7 +35,7 @@ class ViewProvider
         });
     }
 
-    public function registerPhpEngine()
+    public function registerPhpEngine(): PhpEngine
     {
         return new PhpEngine();
     }

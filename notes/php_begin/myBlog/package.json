@@ -21,7 +21,7 @@
     "resolve-url-loader": "^3.1.0",
     "sass": "^1.15.2",
     "sass-loader": "^8.0.0",
-    "startbootstrap-clean-blog": "^6.0.9",
+    "startbootstrap-clean-blog": "5.0.8",
     "startbootstrap-sb-admin-2": "^4.1.4",
     "vue-template-compiler": "^2.7.16"
   },

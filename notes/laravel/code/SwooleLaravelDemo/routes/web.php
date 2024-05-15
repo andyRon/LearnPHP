@@ -24,3 +24,8 @@ Route::get('/task/test', function () {
     $success = \Hhxsv5\LaravelS\Swoole\Task\Task::deliver($task);  // 异步投递任务，触发调用任务类的 handle 方法
     var_dump($success);
 });
+
+
+Route::get('/danmu', function() {
+    return view('danmu');
+});

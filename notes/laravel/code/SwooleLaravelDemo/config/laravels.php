@@ -32,7 +32,7 @@ return [
     |
     */
 
-    'listen_port' => env('LARAVELS_LISTEN_PORT', 5200),
+    'listen_port' => env('LARAVELS_LISTEN_PORT', 5201),
 
     /*
     |--------------------------------------------------------------------------
@@ -148,7 +148,7 @@ return [
 
     'websocket' => [
         'enable' => false,
-        // 'handler' => XxxWebSocketHandler::class,
+         'handler' => \App\Services\WebSocketService::class,  // 配置websocket的服务器类
     ],
 
     /*
@@ -190,12 +190,13 @@ return [
     */
 
     'timer' => [
-        'enable'          => env('LARAVELS_TIMER', false),
+        'enable'          => true,
 
         // The list of cron job
         'jobs'            => [
             // Enable LaravelScheduleJob to run `php artisan schedule:run` every 1 minute, replace Linux Crontab
-            // Hhxsv5\LaravelS\Illuminate\LaravelScheduleJob::class,
+//             Hhxsv5\LaravelS\Illuminate\LaravelScheduleJob::class,
+            \App\Jobs\Timer\TestCronJob::class,
         ],
 
         // Max waiting time of reloading
@@ -285,7 +286,9 @@ return [
         'daemonize'          => env('LARAVELS_DAEMONIZE', false),
         'dispatch_mode'      => env('LARAVELS_DISPATCH_MODE', 3),
         'worker_num'         => env('LARAVELS_WORKER_NUM', 30),
-        //'task_worker_num'    => env('LARAVELS_TASK_WORKER_NUM', 10),
+
+        'task_worker_num'    => function_exists('swoole_cpu_num') ? swoole_cpu_num() * 2 : 8,
+
         'task_ipc_mode'      => 1,
         'task_max_request'   => env('LARAVELS_TASK_MAX_REQUEST', 100000),
         'task_tmpdir'        => @is_writable('/dev/shm/') ? '/dev/shm' : '/tmp',
@@ -304,5 +307,10 @@ return [
         'enable_coroutine'   => false,
         'upload_tmp_dir'     => @is_writable('/dev/shm/') ? '/dev/shm' : '/tmp',
         'http_compression'   => env('LARAVELS_HTTP_COMPRESSION', false),
+
+        // 配置 WebSocket 长连接的强制关闭逻辑
+        // 每隔 60s 检测一次所有连接，如果某个连接在 600s 内都没有发送任何数据，则关闭该连接
+        'heartbeat_idle_time'      => 600,
+        'heartbeat_check_interval' => 60,
     ],
 ];

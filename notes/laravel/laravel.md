@@ -4518,32 +4518,9 @@ composer create-project laravel/laravel myblog --prefer-dist 10.*
 
 参考：https://laravelacademy.org/books/laravel-blog-tutorial
 
-代码：https://github.com/andyRon/arblog-laravel
+转移到：https://github.com/andyRon/arblog-laravel
 
 
-
-```sh
-composer require laravel/breeze --dev
-php artisan breeze:install
-```
-
-
-
-
-
-🔖   sass   DataTables
-
-
-
-## 后台文件上传
-
-默认存放在 `storage/app/public` 目录下
-
-
-
-## 在后台实现文章增删改查功能（支持Markdown）
-
-🔖
 
 
 

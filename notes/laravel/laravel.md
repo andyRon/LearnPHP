@@ -2199,13 +2199,15 @@ Laravel 的命令行调度器允许你在 Laravel 中清晰明了地定义命令
 
 #### 6.1.1 介绍
 
-Laravel 的身份验证工具的核心是由「看守器」和「提供器」组成的。 
+Laravel 的身份验证工具的核心是由「==看守器==」（guards）和「==提供器==」（providers）组成的。 
 
 看守器定义如何对每个请求的用户进行身份验证。例如，Laravel 附带了一个 session 守卫，它使用 session 和 cookie 来维护状态。
 
 提供器定义如何从持久存储中检索用户。 Laravel 支持使用 Eloquent 和数据库查询构建器检索用户。不仅如此，你甚至可以根据应用程序的需要自由定制其他提供程序。
 
-应用程序的身份验证配置文件位于 config/auth.php. 这个文件包含几个记载了的选项，用于调整 Laravel 身份验证服务的行为。
+应用程序的身份验证配置文件位于 `config/auth.php`. 这个文件包含几个记载了的选项，用于调整 Laravel 身份验证服务的行为。
+
+> 看守器和提供器不应与「角色」和「权限」混淆。
 
 ##### 入门套件
 
@@ -2213,9 +2215,9 @@ Laravel 的身份验证工具的核心是由「看守器」和「提供器」组
 
 ##### 数据库注意事项
 
-🔖
 
-remember_token
+
+`remember_token`用于为在登录到应用程序时选择「记住我」选项的用户存储令牌。
 
 ##### 生态系统概述
 
@@ -2233,7 +2235,7 @@ remember_token
 
 2️⃣ [Sanctum](https://learnku.com/docs/laravel/10.x/sanctum/14914)。🔖为了应对 OAuth2 的复杂性和开发人员的困惑，我们着手构建一个更简单、更精简的身份验证包，旨在处理通过令牌进行的第一方 Web 请求和 API 请求。 Laravel Sanctum 发布后，这一目标就实现了。对于除 API 外还提供第一方 web UI 的应用程序，或由单页应用程序（SPA）提供支持的应用程序，或是提供移动客户端的应用程序，Sanctum 是首选推荐的身份验证包。
 
-Laravel Sanctum 是一个混合了 web 和 API 的身份验证包，它让我们管理应用程序的整个身份验证过程成为可能，因为当基于 Sanctum 的应用程序收到请求时，Sanctum 将首先确定请求是否包含引用已验证 session 的 session cookie。Sanctum 通过调用我们前面讨论过的 Laravel 的内置身份验证服务来实现这一点。如果请求没有通过 session cookie 进行身份验证，Sanctum 将检查请求中的 API 令牌。如果存在 API 令牌，则 Sanctum 将使用该令牌对请求进行身份验证。
+Laravel Sanctum 是一个**混合了web和API**的身份验证包，它让我们管理应用程序的整个身份验证过程成为可能，因为当基于 Sanctum 的应用程序收到请求时，Sanctum 将首先确定请求是否包含引用已验证 session 的 session cookie。Sanctum 通过调用我们前面讨论过的 Laravel 的内置身份验证服务来实现这一点。如果请求没有通过 session cookie 进行身份验证，Sanctum 将检查请求中的 API 令牌。如果存在 API 令牌，则 Sanctum 将使用该令牌对请求进行身份验证。
 
 ###### 方案选择
 
@@ -2262,7 +2264,11 @@ Laravel Sanctum 是一个混合了 web 和 API 的身份验证包，它让我们
 
 #### 6.1.3 手动认证用户
 
-##### 记住密码
+不适用上面的入门套件，也可以直接使用 Laravel 身份验证类来管理用户身份验证。
+
+##### 记住用户
+
+
 
 ##### 其他认证方法
 
@@ -4424,7 +4430,7 @@ Laravel Cashier Stripe 为 Stripe 的订阅计费服务提供了一个富有表�
 
 
 
-### Passport OAuth 认证
+### Passport OAuth认证
 
 
 

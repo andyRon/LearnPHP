@@ -89,7 +89,25 @@ echo "</div>";
 
 ?>
 <script type="text/javascript">
+    var oriCol = null;
 
+    function overTr(obj) {
+        oriCol = obj.bgColor;
+        obj.bgColor = '#0f0';
+    }
+
+    function outTr(obj) {
+        obj.bgColor = oriCol;
+    }
+
+    function overTh(obj) {
+        oriCol = obj.bgColor;
+        obj.bgColor = 'red';
+    }
+
+    function outTh(obj) {
+        obj.bgColor = oriCol;
+    }
 </script>
 </body>
 </html>
